@@ -1,6 +1,6 @@
 Package: SuperSelector
 Title: Uses CV SuperLearner for Ensembled Feature Selection
-Version: 0.0.1
+Version: 0.0.2
 Date: 2020-08-26
 Authors@R: 
     person(given = "Sara",
@@ -12,7 +12,7 @@ Description: Uses cross-validated SuperLearner to select relevant features for a
 Depends:
     R (>= 2.14.0)
 Imports:
-	stats,
+    stats,
     dplyr,
     purrr,
     broom,
@@ -24,7 +24,7 @@ Imports:
     SLScreenExtra,
     SuperLearner
 Suggests:
-	tibble,
+    tibble,
     simcausal
 License: GPL-3
 Encoding: UTF-8

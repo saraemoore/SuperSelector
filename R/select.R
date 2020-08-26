@@ -219,7 +219,7 @@ extractScreen.CV.SuperLearner = function(x, selector.library, weighted, verbose)
 #' @importFrom SuperLearner CV.SuperLearner recombineCVSL
 #' @importFrom dplyr `%>%` mutate rename
 #' @importFrom purrr map map_chr
-#' @import stats
+#' @importFrom stats binomial gaussian
 #' @export
 cvSLFeatureSelector = function(Y, X, family = binomial(), obsWeights = NULL, id = NULL, method = "method.NNloglik",
     SL.library = list(c("SL.mean", "screen.corP"), c("SL.mean", "screen.glmnet"), c("SL.mean", "screen.randomForest")),
