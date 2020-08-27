@@ -22,7 +22,7 @@ cvSLFeatureSelector(
   validRows = NULL,
   weighted = FALSE,
   verbose = FALSE,
-  label = NULL,
+  run_label = NULL,
   ...
 )
 }
@@ -53,7 +53,7 @@ estimate coefficients to combine algorithms.}
 
 \item{verbose}{Print diagnostic messages? Defaults to FALSE}
 
-\item{label}{An optional named character vector of length 1. If specified, the value will be added as a column (where the column name is set to \code{names(label)}) in the \code{data.frame} stored in the \code{summary} element of the \code{cvslFull} element of the returned list. One example of when this might be useful is when this function is called from within a cross-validation fold. Then, \code{label} might be set to, for example, \code{c(metafold = fold$v)}.}
+\item{run_label}{An optional named character vector of length 1. If specified, the value will be added as a column (where the column name is set to \code{names(label)}) in the \code{data.frame} stored in the \code{summary} element of the \code{cvslFull} element of the returned list. One example of when this might be useful is when this function is called from within a cross-validation fold. Then, \code{label} might be set to, for example, \code{c(metafold = fold$v)}.}
 }
 \value{
 A named list containing the results of the \code{\link[SuperLearner]{CV.SuperLearner}}
