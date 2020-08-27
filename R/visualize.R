@@ -10,7 +10,8 @@
 #' @param featLabs A named character vector containing factor labels. Can be \code{NULL}.
 #' @param rev Should the factor be sorted in ascending order by val? Defaults to \code{TRUE}.
 #' @return factorized version of \code{feat}
-#' @importFrom dplyr arrange desc summarize group_by `%>%`
+#' @importFrom dplyr arrange desc summarize group_by
+#' @importFrom magrittr `%>%`
 featReorderAndFactorize = function(feat, val, featLabs, rev = TRUE) {
     resOrdered = data.frame(feat = feat, val = val) %>%
         group_by(feat) %>%
@@ -42,7 +43,8 @@ featReorderAndFactorize = function(feat, val, featLabs, rev = TRUE) {
 #' @param multifold
 #' @return A list of ggplots
 #' @importFrom reshape2 melt
-#' @importFrom dplyr `%>%` group_by summarize rename filter select
+#' @importFrom dplyr group_by summarize rename filter select
+#' @importFrom magrittr `%>%`
 #' @importFrom stats median
 #' @import ggplot2
 cvSLVarImpPlotOld = function(res, feat.labs, multifold = TRUE) {
@@ -212,7 +214,7 @@ cvSLVarImpPlotOld = function(res, feat.labs, multifold = TRUE) {
 #' @importFrom scales percent
 #' @importFrom stats median
 #' @import ggplot2
-#' @import ggbeeswarm
+#' @importFrom ggbeeswarm geom_beeswarm
 #' @export
 #' @examples
 #' \dontrun{
@@ -350,7 +352,7 @@ cvSLVarImpPlot = function(res,
 #' @param shapeCol
 #' @return
 #' @import ggplot2
-#' @import ggbeeswarm
+#' @importFrom ggbeeswarm geom_beeswarm
 #' @export
 #' @examples
 #' \dontrun{

@@ -22,6 +22,7 @@ cvSLFeatureSelector(
   validRows = NULL,
   weighted = FALSE,
   verbose = FALSE,
+  label = NULL,
   ...
 )
 }
@@ -49,12 +50,67 @@ estimate coefficients to combine algorithms.}
 \item{selector.library}{As SL.library, either a vector of length 2 or a list of such vectors. The first element of each vector should be a string naming a selector function (typically from the \code{\link[FSelector]{FSelector}} package, with a prefix of \code{cutoff.}). The second element of the vector should be the required second argument to the named function (usually named \code{k}), if one exists. If there is no second argument, this second element can be set to \code{NULL} or, equivalently, omitted altogether.}
 
 \item{nFolds}{numeric of length 1 or 2. If length(nFolds)==1, the value provided will be used as the number of cross-validation folds for both the outer (\code{\link[SuperLearner]{CV.SuperLearner}}) and inner (SuperLearner) cross-validations. If length(nFolds)==2, the first element or element with name "outer" will be used as the number of folds for the outer (\code{\link[SuperLearner]{CV.SuperLearner}}) cross-validation, and the second element or element with name "inner" will be used as the number of folds for the inner (SuperLearner) cross-validation.}
+
+\item{verbose}{Print diagnostic messages? Defaults to FALSE}
+
+\item{label}{An optional named character vector of length 1. If specified, the value will be added as a column (where the column name is set to \code{names(label)}) in the \code{data.frame} stored in the \code{summary} element of the \code{cvslFull} element of the returned list. One example of when this might be useful is when this function is called from within a cross-validation fold. Then, \code{label} might be set to, for example, \code{c(metafold = fold$v)}.}
 }
 \value{
-A named list with elements \code{whichVariable} (a \code{data.frame}), \code{summary} (a
-\code{data.frame}), and cvslFull (a \code{list} containing one result of class
-\code{\link[SuperLearner]{CV.SuperLearner}} for each \code{method} supplied).
+A named list containing the results of the \code{\link[SuperLearner]{CV.SuperLearner}}
+feature selection. Will contain elements \code{whichVariable} (a \code{data.frame}),
+\code{summary} (a \code{data.frame}), and cvslFull (a \code{list} containing one result of class
+\code{CV.SuperLearner} for each \code{method} supplied).
 }
 \description{
 Long description
+}
+\examples{
+\dontrun{
+# remotes::install_github('osofr/simcausal', build_vignettes = FALSE)
+library(simcausal)
+n <- 200
+D <- DAG.empty() +
+    node("W1", distr="rnorm", mean = 1, sd = 1) + # was random noise
+    node("W2", distr="rlnorm", meanlog = 3.56, sdlog = 0.44) + # was age
+    node("W3", distr="rlnorm", meanlog = 0.08 * log(W2) + 3.01, sdlog = 0.21) + # was BMI
+    node("Y", distr="rbern", prob = plogis(-2.35 - 0.013 * W3 + 0.015 * W2))
+D <- set.DAG(D)
+dat <- simobs(D, n=n, rndseed = 620)
+res <- cvSLFeatureSelector(dat$Y, dat[,c("W1", "W2", "W3")], family = binomial(),
+                           method = "method.NNloglik",
+                           SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
+                                                      c("SL.mean", "screen.earth.backwardprune")),
+                                                 c("random forest biggest diff mean",
+                                                   "splines biggest diff mean")),
+                           selector.library = data.frame(selector = c("cutoff.biggest.diff",
+                                                                      "cutoff.k"),
+                                                         k = c(NA, 2),
+                                                         rowname = c("biggest diff", "top2"),
+                                                         stringsAsFactors = FALSE) \%>\%
+                                              tibble::column_to_rownames(),
+                           nFolds = 3,
+                           verbose = TRUE)
+
+# based on example in SuperLearner package
+set.seed(1)
+n <- 100
+p <- 20
+X <- matrix(rnorm(n*p), nrow = n, ncol = p)
+X <- data.frame(X)
+Y <- X[, 1] + sqrt(abs(X[, 2] * X[, 3])) + X[, 2] - X[, 3] + rnorm(n)
+res <- cvSLFeatureSelector(Y, X, family = gaussian(),
+                           method = "method.NNLS",
+                           SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
+                                                      c("SL.mean", "screen.earth.backwardprune")),
+                                                 c("random forest biggest diff mean",
+                                                   "splines biggest diff mean")),
+                           selector.library = data.frame(selector = c("cutoff.biggest.diff",
+                                                                     "cutoff.k"),
+                                                         k = c(NA, 3),
+                                                         rowname = c("biggest diff", "top3"),
+                                                         stringsAsFactors = FALSE) \%>\%
+                                              tibble::column_to_rownames(),
+                           nFolds = 3,
+                           verbose = TRUE)
+}
 }

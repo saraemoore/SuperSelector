@@ -110,6 +110,8 @@ metaFeatSel = function(selector, k, x, xNames, env = parent.frame(), verbose = F
 #' @param propCol
 #' @param verbose logical; passthru to metaFeatSel
 #' @importFrom purrr map2 map
+#' @importFrom dplyr mutate
+#' @importFrom magrittr `%>%`
 #' @return
 selectFeaturesBySelector <- function(df, sel, propCol, verbose) {
     # as.character because it may come in as a factor if stringsAsFactors isn't FALSE
@@ -126,6 +128,9 @@ selectFeaturesBySelector <- function(df, sel, propCol, verbose) {
 #' @param sel
 #' @param propCol
 #' @param verbose logical; passthru to selectFeaturesBySelector
+#' @importFrom purrr map
+#' @importFrom dplyr bind_rows
+#' @importFrom magrittr `%>%`
 #' @return
 selectFeaturesByMethodAndSelector <- function(df, sel, propCol, verbose) {
     df %>%
@@ -191,6 +196,32 @@ extractScreen.CV.SuperLearner = function(x, selector.library, weighted, verbose)
 #' 
 #' Long description
 #' 
+#' @param x a vector
+#' @return logical
+is_not_homogenous <- function(x) {
+    return(length(unique(x)) > 1)
+}
+
+# res <- cvSLFeatureSelector(y_all[trainRows], x_all[trainRows,], family = binomial(),
+#                            method = c("method.NNloglik", "method.NNLS"),
+#                            SL.library = list(`lasso mean` = c("SL.mean", "screen.wgtd.lasso"), # same as screen.glmnet
+#                                              `random forest biggest diff mean` = c("SL.mean", "screen.randomForest.imp"),
+#                                              `splines biggest diff mean` = c("SL.mean", "screen.earth.backwardprune"),
+#                                              `lasso glm` = c("SL.glm", "screen.wgtd.lasso"), # same as screen.glmnet
+#                                              `random forest biggest diff glm` = c("SL.glm", "screen.randomForest.imp"),
+#                                              `splines biggest diff glm` = c("SL.glm", "screen.earth.backwardprune")),
+#                            selector.library = data.frame(selector = c("cutoff.biggest.diff", "cutoff.k", "cutoff.k", "cutoff.val"),
+#                                                          k = c(NA, 20, 40, 0.05),
+#                                                          rowname = c("biggest diff", "top20", "top40", "five percent"),
+#                                                          stringsAsFactors = FALSE) %>% tibble::column_to_rownames(),
+#                            nFolds = 5,
+#                            verbose = TRUE,
+#                            label = c(metafold = fold$v))
+
+#' Short description
+#' 
+#' Long description
+#' 
 #' @param Y Outcome (numeric vector). See \code{\link[SuperLearner]{CV.SuperLearner}}.
 #' @param X Predictor variable(s) (data.frame or matrix). See
 #' \code{\link[SuperLearner]{CV.SuperLearner}}.
@@ -211,21 +242,75 @@ extractScreen.CV.SuperLearner = function(x, selector.library, weighted, verbose)
 #' @param shuffle
 #' @param validRows
 #' @param weighted
-#' @param verbose
+#' @param verbose Print diagnostic messages? Defaults to FALSE
+#' @param label An optional named character vector of length 1. If specified, the value will be added as a column (where the column name is set to \code{names(label)}) in the \code{data.frame} stored in the \code{summary} element of the \code{cvslFull} element of the returned list. One example of when this might be useful is when this function is called from within a cross-validation fold. Then, \code{label} might be set to, for example, \code{c(metafold = fold$v)}.
 #' @param ...
-#' @return A named list with elements \code{whichVariable} (a \code{data.frame}), \code{summary} (a
-#' \code{data.frame}), and cvslFull (a \code{list} containing one result of class
-#' \code{\link[SuperLearner]{CV.SuperLearner}} for each `method` supplied).
+#' @return A named list containing the results of the \code{\link[SuperLearner]{CV.SuperLearner}}
+#' feature selection. Will contain elements \code{whichVariable} (a \code{data.frame}),
+#' \code{summary} (a \code{data.frame}), and cvslFull (a \code{list} containing one result of class
+#' \code{CV.SuperLearner} for each `method` supplied).
 #' @importFrom SuperLearner CV.SuperLearner recombineCVSL
-#' @importFrom dplyr `%>%` mutate rename
+#' @importFrom dplyr mutate rename select
+#' @importFrom tidyselect all_of
+#' @importFrom magrittr `%>%`
 #' @importFrom purrr map map_chr
 #' @importFrom stats binomial gaussian
 #' @export
+#' @examples
+#' \dontrun{
+#' # remotes::install_github('osofr/simcausal', build_vignettes = FALSE)
+#' library(simcausal)
+#' n <- 200
+#' D <- DAG.empty() +
+#'     node("W1", distr="rnorm", mean = 1, sd = 1) + # was random noise
+#'     node("W2", distr="rlnorm", meanlog = 3.56, sdlog = 0.44) + # was age
+#'     node("W3", distr="rlnorm", meanlog = 0.08 * log(W2) + 3.01, sdlog = 0.21) + # was BMI
+#'     node("Y", distr="rbern", prob = plogis(-2.35 - 0.013 * W3 + 0.015 * W2))
+#' D <- set.DAG(D)
+#' dat <- simobs(D, n=n, rndseed = 620)
+#' res <- cvSLFeatureSelector(dat$Y, dat[,c("W1", "W2", "W3")], family = binomial(),
+#'                            method = "method.NNloglik",
+#'                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
+#'                                                       c("SL.mean", "screen.earth.backwardprune")),
+#'                                                  c("random forest biggest diff mean",
+#'                                                    "splines biggest diff mean")),
+#'                            selector.library = data.frame(selector = c("cutoff.biggest.diff",
+#'                                                                       "cutoff.k"),
+#'                                                          k = c(NA, 2),
+#'                                                          rowname = c("biggest diff", "top2"),
+#'                                                          stringsAsFactors = FALSE) %>%
+#'                                               tibble::column_to_rownames(),
+#'                            nFolds = 3,
+#'                            verbose = TRUE)
+#' 
+#' # based on example in SuperLearner package
+#' set.seed(1)
+#' n <- 100
+#' p <- 20
+#' X <- matrix(rnorm(n*p), nrow = n, ncol = p)
+#' X <- data.frame(X)
+#' Y <- X[, 1] + sqrt(abs(X[, 2] * X[, 3])) + X[, 2] - X[, 3] + rnorm(n)
+#' res <- cvSLFeatureSelector(Y, X, family = gaussian(),
+#'                            method = "method.NNLS",
+#'                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
+#'                                                       c("SL.mean", "screen.earth.backwardprune")),
+#'                                                  c("random forest biggest diff mean",
+#'                                                    "splines biggest diff mean")),
+#'                            selector.library = data.frame(selector = c("cutoff.biggest.diff",
+#'                                                                      "cutoff.k"),
+#'                                                          k = c(NA, 3),
+#'                                                          rowname = c("biggest diff", "top3"),
+#'                                                          stringsAsFactors = FALSE) %>%
+#'                                               tibble::column_to_rownames(),
+#'                            nFolds = 3,
+#'                            verbose = TRUE)
+#' }
 cvSLFeatureSelector = function(Y, X, family = binomial(), obsWeights = NULL, id = NULL, method = "method.NNloglik",
     SL.library = list(c("SL.mean", "screen.corP"), c("SL.mean", "screen.glmnet"), c("SL.mean", "screen.randomForest")),
     selector.library = data.frame(selector = "cutoff.biggest.diff", k = NA, stringsAsFactors = FALSE),
     nFolds = c(outer = 10, inner = 10),
-    trimLogit = 0.001, stratifyCV = (family$family=="binomial"), shuffle = TRUE, validRows = NULL, weighted = FALSE, verbose = FALSE, ...) {
+    trimLogit = 0.001, stratifyCV = (family$family=="binomial"), shuffle = TRUE, validRows = NULL, weighted = FALSE,
+    verbose = FALSE, label = NULL, ...) {
 
     if(length(nFolds) < 1) {
         nFolds = c(outer = 10, inner = 10)
@@ -248,6 +333,14 @@ cvSLFeatureSelector = function(Y, X, family = binomial(), obsWeights = NULL, id 
         }
         # method doesn't matter unless looking at coefficient estimates
         method = method[[1]]
+    }
+
+    # remove columns from X if they're homogeneous
+    not_homogenous_cols <- X %>% select(where(is_not_homogenous)) %>% colnames()
+    if(length(not_homogenous_cols) < ncol(X)) {
+        warning("The following homogeneous features were dropped in cvSLFeatureSelector():\n",
+                paste(setdiff(colnames(X), not_homogenous_cols), collapse = ", "))
+        X <- X %>% select(all_of(not_homogenous_cols))
     }
 
     cvSLres = CV.SuperLearner(
@@ -286,127 +379,15 @@ cvSLFeatureSelector = function(Y, X, family = binomial(), obsWeights = NULL, id 
                                 mutate(keep_bin = map_chr(keep, function(x) paste(as.numeric(x), collapse = ""))) %>%
                                 rename(combo_method = method) # prevent conflicts later
 
+    if(!is.null(label)&!is.null(names(label))) {
+        # optionally: label with, for example, fold number
+        cvSLres$summary[,names(label)] = unname(label[[1]])
+    }
+
     return(c(screenRes, cvslFull = list(cvSLres)))
 }
 
 ################################################################################
-
-#' Short description
-#' 
-#' Long description
-#' 
-#' @param x a vector
-#' @return logical
-is_not_homogenous <- function(x) {
-    return(length(unique(x)) > 1)
-}
-
-# res <- cvSuperSelect(y_all[trainRows], x_all[trainRows,], binomial(),
-#                      list(SL.library = list(`lasso mean` = c("SL.mean", "screen.wgtd.lasso"), # same as screen.glmnet
-#                                             `random forest biggest diff mean` = c("SL.mean", "screen.randomForest.imp"),
-#                                             `splines biggest diff mean` = c("SL.mean", "screen.earth.backwardprune"),
-#                                             `lasso glm` = c("SL.glm", "screen.wgtd.lasso"), # same as screen.glmnet
-#                                             `random forest biggest diff glm` = c("SL.glm", "screen.randomForest.imp"),
-#                                             `splines biggest diff glm` = c("SL.glm", "screen.earth.backwardprune")),
-#                           method = c("method.NNloglik", "method.NNLS"),
-#                           selector.library = data.frame(selector = c("cutoff.biggest.diff", "cutoff.k", "cutoff.k", "cutoff.val"),
-#                                                         k = c(NA, 20, 40, 0.05),
-#                                                         rowname = c("biggest diff", "top20", "top40", "five percent"),
-#                                                         stringsAsFactors = FALSE) %>% tibble::column_to_rownames(),
-#                           nFolds = 5),
-#                      verbose = TRUE, fold_num = fold$v)
-
-#' Short description
-#' 
-#' Long description
-#' 
-#' @param y_all Outcome vector
-#' @param x_all Covariate/Feature \code{data.frame}
-#' @param family Describes the error distribution
-#' @param cvSLfeatsel_control List of SL.library, method, selector.library, and nFolds
-#' @param verbose Print diagnostic messages? Defaults to FALSE
-#' @param fold_num Optional fold number if this function is being executed within a CV fold.
-#' @return A named list containing the results of the \code{\link[SuperLearner]{CV.SuperLearner}}
-#' feature selection. Will contain elements \code{whichVariable} (a \code{data.frame}),
-#' \code{summary} (a \code{data.frame}), and cvslFull (a \code{list} containing one result of class
-#' \code{CV.SuperLearner} for each `method` supplied).
-#' @importFrom dplyr `%>%` select group_by summarize_at left_join
-#' @importFrom tidyselect all_of
-#' @import broom
-#' @import dplyr
-#' @export
-#' @examples
-#' \dontrun{
-#' # remotes::install_github('osofr/simcausal', build_vignettes = FALSE)
-#' library(simcausal)
-#' n <- 200
-#' D <- DAG.empty() +
-#'     node("W1", distr="rnorm", mean = 1, sd = 1) + # was random noise
-#'     node("W2", distr="rlnorm", meanlog = 3.56, sdlog = 0.44) + # was age
-#'     node("W3", distr="rlnorm", meanlog = 0.08 * log(W2) + 3.01, sdlog = 0.21) + # was BMI
-#'     node("Y", distr="rbern", prob = plogis(-2.35 - 0.013 * W3 + 0.015 * W2))
-#' D <- set.DAG(D)
-#' dat <- simobs(D, n=n, rndseed = 620)
-#' res <- cvSuperSelect(dat$Y, dat[,c("W1", "W2", "W3")], binomial(),
-#'                      list(SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
-#'                                                      c("SL.mean", "screen.earth.backwardprune")),
-#'                                                 c("random forest biggest diff mean",
-#'                                                   "splines biggest diff mean")),
-#'                           method = "method.NNloglik",
-#'                           selector.library = data.frame(selector = c("cutoff.biggest.diff",
-#'                                                                      "cutoff.k"),
-#'                                                         k = c(NA, 2),
-#'                                                         rowname = c("biggest diff", "top2"),
-#'                                                         stringsAsFactors = FALSE) %>%
-#'                                              tibble::column_to_rownames(),
-#'                           nFolds = 3),
-#'                      verbose = TRUE)
-#' 
-#' # based on example in SuperLearner package
-#' set.seed(1)
-#' n <- 100
-#' p <- 20
-#' X <- matrix(rnorm(n*p), nrow = n, ncol = p)
-#' X <- data.frame(X)
-#' Y <- X[, 1] + sqrt(abs(X[, 2] * X[, 3])) + X[, 2] - X[, 3] + rnorm(n)
-#' res <- cvSuperSelect(Y, X, gaussian(),
-#'                      list(SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
-#'                                                      c("SL.mean", "screen.earth.backwardprune")),
-#'                                                 c("random forest biggest diff mean",
-#'                                                   "splines biggest diff mean")),
-#'                           method = "method.NNLS",
-#'                           selector.library = data.frame(selector = c("cutoff.biggest.diff",
-#'                                                                      "cutoff.k"),
-#'                                                         k = c(NA, 3),
-#'                                                         rowname = c("biggest diff", "top3"),
-#'                                                         stringsAsFactors = FALSE) %>%
-#'                                              tibble::column_to_rownames(),
-#'                           nFolds = 3),
-#'                      verbose = TRUE)
-#' }
-cvSuperSelect <- function(y_all, x_all, family, cvSLfeatsel_control, verbose = FALSE, fold_num = NULL) {
-
-    # remove columns from x_all if they're homogeneous
-    #   prior to running through cvSLFeatureSelector()
-    not_homogenous_cols <- x_all %>% select(where(is_not_homogenous)) %>% colnames()
-    if(length(not_homogenous_cols) < ncol(x_all)) {
-        warning("The following homogeneous features were dropped in cvSuperSelect():\n",
-                paste(setdiff(colnames(x_all), not_homogenous_cols), collapse = ", "))
-        x_all <- x_all %>% select(all_of(not_homogenous_cols))
-    }
-
-    cvSLres = cvSLFeatureSelector(y_all, x_all, family = family,
-        method = cvSLfeatsel_control$method, SL.library = cvSLfeatsel_control$SL.library,
-        selector.library = cvSLfeatsel_control$selector.library, nFolds = cvSLfeatsel_control$nFolds,
-        verbose = verbose)
-
-    if(!is.null(fold_num)) {
-        # optionally: label with fold number
-        cvSLres$summary$metafold = fold_num
-    }
-
-    return(cvSLres)
-}
 
 # need to retain method, selector, k -- as three list-columns
 # only keeping each unique combo of X columns
@@ -418,7 +399,8 @@ cvSuperSelect <- function(y_all, x_all, family, cvSLfeatsel_control, verbose = F
 #' 
 #' @param res returned from cvSuperSelect()
 #' @return
-#' @import dplyr
+#' @importFrom dplyr group_by summarize_at left_join select
+#' @importFrom magrittr `%>%`
 #' @export
 #' @examples
 #' \dontrun{

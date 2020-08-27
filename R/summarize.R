@@ -8,7 +8,8 @@
 #' @param discrete If \code{TRUE}, instead of summarizing, simply return rows in \code{res} where
 #' \code{discrete} is \code{TRUE}. Defaults to \code{FALSE}. 
 #' @return A \code{data.frame}
-#' @import dplyr
+#' @importFrom dplyr filter group_by group_by_at summarize arrange desc
+#' @importFrom magrittr `%>%`
 #' @export 
 #' @examples
 #' \dontrun{
