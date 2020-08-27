@@ -227,7 +227,7 @@ is_not_homogenous <- function(x) {
 #' @param validRows
 #' @param weighted
 #' @param verbose Print diagnostic messages? Defaults to FALSE
-#' @param run_label An optional named character vector of length 1. If specified, the value will be added as a column (where the column name is set to \code{names(label)}) in the \code{data.frame} stored in the \code{summary} element of the \code{cvslFull} element of the returned list. One example of when this might be useful is when this function is called from within a cross-validation fold. Then, \code{label} might be set to, for example, \code{c(metafold = fold$v)}.
+#' @param label An optional named character vector of length 1. If specified, the value will be added as a column (where the column name is set to \code{names(label)}) in the \code{data.frame} stored in the \code{summary} element of the \code{cvslFull} element of the returned list. One example of when this might be useful is when this function is called from within a cross-validation fold. Then, \code{label} might be set to, for example, \code{c(metafold = fold$v)}.
 #' @param ...
 #' @return A named list containing the results of the \code{\link[SuperLearner]{CV.SuperLearner}}
 #' feature selection. Will contain elements \code{whichVariable} (a \code{data.frame}),
@@ -295,7 +295,7 @@ cvSLFeatureSelector = function(Y, X, family = binomial(), obsWeights = NULL, id 
     selector.library = data.frame(selector = "cutoff.biggest.diff", k = NA, stringsAsFactors = FALSE),
     nFolds = c(outer = 10, inner = 10),
     trimLogit = 0.001, stratifyCV = (family$family=="binomial"), shuffle = TRUE, validRows = NULL, weighted = FALSE,
-    verbose = FALSE, run_label = NULL, ...) {
+    verbose = FALSE, label = NULL, ...) {
 
     if(length(nFolds) < 1) {
         nFolds = c(outer = 10, inner = 10)
@@ -364,9 +364,9 @@ cvSLFeatureSelector = function(Y, X, family = binomial(), obsWeights = NULL, id 
                                 mutate(keep_bin = map_chr(keep, function(x) paste(as.numeric(x), collapse = ""))) %>%
                                 rename(combo_method = method) # prevent conflicts later
 
-    if(!is.null(run_label)&!is.null(names(run_label))) {
+    if(!is.null(label)&!is.null(names(label))) {
         # optionally: label with, for example, fold number
-        cvSLres$summary <- cvSLres$summary %>% add_column(!!!run_label)
+        screenRes$summary <- screenRes$summary %>% add_column(!!!label)
     }
 
     return(c(screenRes, cvslFull = list(cvSLres)))
