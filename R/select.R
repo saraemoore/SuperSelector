@@ -342,7 +342,7 @@ cvSLFeatureSelector = function(Y, X, family = binomial(), obsWeights = NULL, id 
                     lapply(method[-1], function(i)
                            recombineCVSL(cvSLres,
                            method = i, verbose = verbose, saveAll = TRUE,
-                           parallel = FALSE)))
+                           parallel = "seq")))
     } else {
         cvSLres = list(cvSLres)
     }
@@ -382,7 +382,7 @@ cvSLFeatureSelector = function(Y, X, family = binomial(), obsWeights = NULL, id 
 #' 
 #' Long description
 #' 
-#' @param res returned from cvSuperSelect()
+#' @param res returned from cvSLFeatureSelector()
 #' @return
 #' @importFrom dplyr group_by summarize_at left_join select
 #' @importFrom magrittr `%>%`
@@ -396,20 +396,20 @@ cvSLFeatureSelector = function(Y, X, family = binomial(), obsWeights = NULL, id 
 #' X <- matrix(rnorm(n*p), nrow = n, ncol = p)
 #' X <- data.frame(X)
 #' Y <- X[, 1] + sqrt(abs(X[, 2] * X[, 3])) + X[, 2] - X[, 3] + rnorm(n)
-#' res <- cvSuperSelect(Y, X, gaussian(),
-#'                      list(SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
-#'                                                      c("SL.mean", "screen.earth.backwardprune")),
-#'                                                 c("random forest biggest diff mean",
-#'                                                   "splines biggest diff mean")),
-#'                           method = "method.NNLS",
-#'                           selector.library = data.frame(selector = c("cutoff.biggest.diff",
+#' res <- cvSLFeatureSelector(Y, X, family = gaussian(),
+#'                            method = "method.NNLS",
+#'                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
+#'                                                       c("SL.mean", "screen.earth.backwardprune")),
+#'                                                  c("random forest biggest diff mean",
+#'                                                    "splines biggest diff mean")),
+#'                            selector.library = data.frame(selector = c("cutoff.biggest.diff",
 #'                                                                      "cutoff.k"),
-#'                                                         k = c(NA, 3),
-#'                                                         rowname = c("biggest diff", "top3"),
-#'                                                         stringsAsFactors = FALSE) %>%
-#'                                              tibble::column_to_rownames(),
-#'                           nFolds = 3),
-#'                      verbose = TRUE)
+#'                                                          k = c(NA, 3),
+#'                                                          rowname = c("biggest diff", "top3"),
+#'                                                          stringsAsFactors = FALSE) %>%
+#'                                               tibble::column_to_rownames(),
+#'                            nFolds = 3,
+#'                            verbose = TRUE)
 #' groupBySelectionSet(res)
 #' }
 groupBySelectionSet <- function(res) {

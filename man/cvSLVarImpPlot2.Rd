@@ -41,20 +41,20 @@ p <- 20
 X <- matrix(rnorm(n*p), nrow = n, ncol = p)
 X <- data.frame(X)
 Y <- X[, 1] + sqrt(abs(X[, 2] * X[, 3])) + X[, 2] - X[, 3] + rnorm(n)
-res <- cvSuperSelect(Y, X, gaussian(),
-                     list(SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
-                                                     c("SL.mean", "screen.earth.backwardprune")),
-                                                c("random forest biggest diff mean",
-                                                  "splines biggest diff mean")),
-                          method = "method.NNLS",
-                          selector.library = data.frame(selector = c("cutoff.biggest.diff",
+res <- cvSLFeatureSelector(Y, X, family = gaussian(),
+                           method = "method.NNLS",
+                           SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
+                                                      c("SL.mean", "screen.earth.backwardprune")),
+                                                 c("random forest biggest diff mean",
+                                                   "splines biggest diff mean")),
+                           selector.library = data.frame(selector = c("cutoff.biggest.diff",
                                                                      "cutoff.k"),
-                                                        k = c(NA, 3),
-                                                        rowname = c("biggest diff", "top3"),
-                                                        stringsAsFactors = FALSE) \%>\%
-                                             tibble::column_to_rownames(),
-                          nFolds = 3),
-                     verbose = TRUE)
+                                                         k = c(NA, 3),
+                                                         rowname = c("biggest diff", "top3"),
+                                                         stringsAsFactors = FALSE) \%>\%
+                                              tibble::column_to_rownames(),
+                           nFolds = 5,
+                           verbose = TRUE)
 res_sum <- summarizeScreen(res$summary, groupCols = c("method", "screener"))
 cvSLVarImpPlot2(res_sum)
 }
