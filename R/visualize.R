@@ -219,13 +219,8 @@ cvSLVarImpPlotOld = function(res, feat.labs, multifold = TRUE) {
 #' @examples
 #' \dontrun{
 #' # based on example in SuperLearner package
-#' set.seed(1)
-#' n_obs <- 100
-#' p_feat <- 20
-#' X <- matrix(rnorm(n_obs*p_feat), nrow = n_obs, ncol = p_feat)
-#' X <- data.frame(X)
-#' Y <- X[, 1] + sqrt(abs(X[, 2] * X[, 3])) + X[, 2] - X[, 3] + rnorm(n_obs)
-#' res <- cvSLFeatureSelector(Y, X, family = gaussian(),
+#' dat <- sim_sl_data(n_obs = 100, rnd_seed = 1)
+#' res <- cvSLFeatureSelector(dat %>% pull(Y), dat %>% select(-c(ID, Y)), family = gaussian(),
 #'                            method = "method.NNLS",
 #'                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
 #'                                                       c("SL.mean", "screen.earth.backwardprune")),
@@ -239,7 +234,9 @@ cvSLVarImpPlotOld = function(res, feat.labs, multifold = TRUE) {
 #'                                               tibble::column_to_rownames(),
 #'                            nFolds = 5,
 #'                            verbose = TRUE)
-#' res_sum <- summarizeScreen(res$summary, groupCols = c("method", "screener"), collapseCols = "screener")
+#' res_sum <- summarizeScreen(res$summary,
+#'                            groupCols = c("method", "screener"),
+#'                            collapseCols = "screener")
 #' cvSLVarImpPlot(res_sum)
 #' }
 cvSLVarImpPlot = function(res,
@@ -357,13 +354,8 @@ cvSLVarImpPlot = function(res,
 #' @examples
 #' \dontrun{
 #' # based on example in SuperLearner package
-#' set.seed(1)
-#' n <- 100
-#' p <- 20
-#' X <- matrix(rnorm(n*p), nrow = n, ncol = p)
-#' X <- data.frame(X)
-#' Y <- X[, 1] + sqrt(abs(X[, 2] * X[, 3])) + X[, 2] - X[, 3] + rnorm(n)
-#' res <- cvSLFeatureSelector(Y, X, family = gaussian(),
+#' dat <- sim_sl_data(n_obs = 100, rnd_seed = 1)
+#' res <- cvSLFeatureSelector(dat %>% pull(Y), dat %>% select(-c(ID, Y)), family = gaussian(),
 #'                            method = "method.NNLS",
 #'                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
 #'                                                       c("SL.mean", "screen.earth.backwardprune")),

@@ -67,16 +67,8 @@ Long description
 \examples{
 \dontrun{
 # remotes::install_github('osofr/simcausal', build_vignettes = FALSE)
-library(simcausal)
-n <- 200
-D <- DAG.empty() +
-    node("W1", distr="rnorm", mean = 1, sd = 1) + # was random noise
-    node("W2", distr="rlnorm", meanlog = 3.56, sdlog = 0.44) + # was age
-    node("W3", distr="rlnorm", meanlog = 0.08 * log(W2) + 3.01, sdlog = 0.21) + # was BMI
-    node("Y", distr="rbern", prob = plogis(-2.35 - 0.013 * W3 + 0.015 * W2))
-D <- set.DAG(D)
-dat <- simobs(D, n=n, rndseed = 620)
-res <- cvSLFeatureSelector(dat$Y, dat[,c("W1", "W2", "W3")], family = binomial(),
+dat <- sim_toy_data(n_obs = 200, rnd_seed = 620)
+res <- cvSLFeatureSelector(dat \%>\% pull(Y), dat \%>\% select(-c(ID, Y)), family = binomial(),
                            method = "method.NNloglik",
                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
                                                       c("SL.mean", "screen.earth.backwardprune")),
@@ -92,13 +84,8 @@ res <- cvSLFeatureSelector(dat$Y, dat[,c("W1", "W2", "W3")], family = binomial()
                            verbose = TRUE)
 
 # based on example in SuperLearner package
-set.seed(1)
-n <- 100
-p <- 20
-X <- matrix(rnorm(n*p), nrow = n, ncol = p)
-X <- data.frame(X)
-Y <- X[, 1] + sqrt(abs(X[, 2] * X[, 3])) + X[, 2] - X[, 3] + rnorm(n)
-res <- cvSLFeatureSelector(Y, X, family = gaussian(),
+dat <- sim_sl_data(n_obs = 100, rnd_seed = 1)
+res <- cvSLFeatureSelector(dat \%>\% pull(Y), dat \%>\% select(-c(ID, Y)), family = gaussian(),
                            method = "method.NNLS",
                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
                                                       c("SL.mean", "screen.earth.backwardprune")),

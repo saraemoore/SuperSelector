@@ -206,6 +206,25 @@ is_not_homogenous <- function(x) {
 #' 
 #' Long description
 #' 
+#' @param wv_result The \code{data.frame} stored in the \code{whichVariable} element of the list
+#' returned from \code{extractScreen.CV.SuperLearner}. This \code{data.frame} is expected to
+#' contain columns named \code{keep} and \code{method}. 
+#' @param feature_names Ordered names of predictor variable(s).
+#' @return A \code{data.frame} with indicators reordered by original \code{features} column order
+#' @importFrom dplyr mutate rename
+#' @importFrom magrittr `%>%`
+#' @importFrom purrr map map_chr
+sortWhichVariable <- function(wv_result, feature_names) {
+    wv_result %>%
+        mutate(keep = map(keep, function(i) i[feature_names])) %>%
+        mutate(keep_bin = map_chr(keep, function(x) paste(as.numeric(x), collapse = ""))) %>%
+        rename(combo_method = method) # prevent conflicts later
+}
+
+#' Short description
+#' 
+#' Long description
+#' 
 #' @param Y Outcome (numeric vector). See \code{\link[SuperLearner]{CV.SuperLearner}}.
 #' @param X Predictor variable(s) (data.frame or matrix). See
 #' \code{\link[SuperLearner]{CV.SuperLearner}}.
@@ -234,26 +253,17 @@ is_not_homogenous <- function(x) {
 #' \code{summary} (a \code{data.frame}), and cvslFull (a \code{list} containing one result of class
 #' \code{CV.SuperLearner} for each `method` supplied).
 #' @importFrom SuperLearner CV.SuperLearner recombineCVSL
-#' @importFrom dplyr mutate rename select
+#' @importFrom dplyr select
 #' @importFrom tidyselect all_of
 #' @importFrom magrittr `%>%`
-#' @importFrom purrr map map_chr
 #' @importFrom stats binomial gaussian
 #' @importFrom tibble add_column
 #' @export
 #' @examples
 #' \dontrun{
 #' # remotes::install_github('osofr/simcausal', build_vignettes = FALSE)
-#' library(simcausal)
-#' n <- 200
-#' D <- DAG.empty() +
-#'     node("W1", distr="rnorm", mean = 1, sd = 1) + # was random noise
-#'     node("W2", distr="rlnorm", meanlog = 3.56, sdlog = 0.44) + # was age
-#'     node("W3", distr="rlnorm", meanlog = 0.08 * log(W2) + 3.01, sdlog = 0.21) + # was BMI
-#'     node("Y", distr="rbern", prob = plogis(-2.35 - 0.013 * W3 + 0.015 * W2))
-#' D <- set.DAG(D)
-#' dat <- simobs(D, n=n, rndseed = 620)
-#' res <- cvSLFeatureSelector(dat$Y, dat[,c("W1", "W2", "W3")], family = binomial(),
+#' dat <- sim_toy_data(n_obs = 200, rnd_seed = 620)
+#' res <- cvSLFeatureSelector(dat %>% pull(Y), dat %>% select(-c(ID, Y)), family = binomial(),
 #'                            method = "method.NNloglik",
 #'                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
 #'                                                       c("SL.mean", "screen.earth.backwardprune")),
@@ -269,13 +279,8 @@ is_not_homogenous <- function(x) {
 #'                            verbose = TRUE)
 #' 
 #' # based on example in SuperLearner package
-#' set.seed(1)
-#' n <- 100
-#' p <- 20
-#' X <- matrix(rnorm(n*p), nrow = n, ncol = p)
-#' X <- data.frame(X)
-#' Y <- X[, 1] + sqrt(abs(X[, 2] * X[, 3])) + X[, 2] - X[, 3] + rnorm(n)
-#' res <- cvSLFeatureSelector(Y, X, family = gaussian(),
+#' dat <- sim_sl_data(n_obs = 100, rnd_seed = 1)
+#' res <- cvSLFeatureSelector(dat %>% pull(Y), dat %>% select(-c(ID, Y)), family = gaussian(),
 #'                            method = "method.NNLS",
 #'                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
 #'                                                       c("SL.mean", "screen.earth.backwardprune")),
@@ -359,10 +364,7 @@ cvSLFeatureSelector = function(Y, X, family = binomial(), obsWeights = NULL, id 
                                               verbose = verbose)
 
     # reorder indicators by original X column order
-    screenRes$whichVariable = screenRes$whichVariable %>%
-                                mutate(keep = map(keep, function(i) i[colnames(X)])) %>%
-                                mutate(keep_bin = map_chr(keep, function(x) paste(as.numeric(x), collapse = ""))) %>%
-                                rename(combo_method = method) # prevent conflicts later
+    screenRes$whichVariable = sortWhichVariable(screenRes$whichVariable, colnames(X))
 
     if(!is.null(label)&!is.null(names(label))) {
         # optionally: label with, for example, fold number
@@ -390,13 +392,8 @@ cvSLFeatureSelector = function(Y, X, family = binomial(), obsWeights = NULL, id 
 #' @examples
 #' \dontrun{
 #' # based on example in SuperLearner package
-#' set.seed(1)
-#' n <- 100
-#' p <- 20
-#' X <- matrix(rnorm(n*p), nrow = n, ncol = p)
-#' X <- data.frame(X)
-#' Y <- X[, 1] + sqrt(abs(X[, 2] * X[, 3])) + X[, 2] - X[, 3] + rnorm(n)
-#' res <- cvSLFeatureSelector(Y, X, family = gaussian(),
+#' dat <- sim_sl_data(n_obs = 100, rnd_seed = 1)
+#' res <- cvSLFeatureSelector(dat %>% pull(Y), dat %>% select(-c(ID, Y)), family = gaussian(),
 #'                            method = "method.NNLS",
 #'                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
 #'                                                       c("SL.mean", "screen.earth.backwardprune")),

@@ -14,13 +14,8 @@
 #' @examples
 #' \dontrun{
 #' # based on example in SuperLearner package
-#' set.seed(1)
-#' n <- 100
-#' p <- 20
-#' X <- matrix(rnorm(n*p), nrow = n, ncol = p)
-#' X <- data.frame(X)
-#' Y <- X[, 1] + sqrt(abs(X[, 2] * X[, 3])) + X[, 2] - X[, 3] + rnorm(n)
-#' res <- cvSLFeatureSelector(Y, X, family = gaussian(),
+#' dat <- sim_sl_data(n_obs = 100, rnd_seed = 1)
+#' res <- cvSLFeatureSelector(dat %>% pull(Y), dat %>% select(-c(ID, Y)), family = gaussian(),
 #'                            method = "method.NNLS",
 #'                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
 #'                                                       c("SL.mean", "screen.earth.backwardprune")),
