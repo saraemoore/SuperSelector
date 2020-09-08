@@ -2,13 +2,28 @@
 % Please edit documentation in R/select.R
 \name{makeLibArgNumeric}
 \alias{makeLibArgNumeric}
-\title{Short description}
+\title{Coerce a value to numeric or die trying}
 \usage{
 makeLibArgNumeric(x, errorFunction)
 }
-\value{
+\arguments{
+\item{x}{A value that should be coerced to numeric}
 
+\item{errorFunction}{A function which elicits a useful error message if \code{x} cannot be
+coerced to numeric}
+}
+\value{
+\code{x} as numeric, if it was coercible; otherwise, an error is produced.
 }
 \description{
-Long description
+Coerce a value to numeric or die trying
+}
+\examples{
+\dontrun{
+errfxn = function(txt = "") {
+  stop(paste("x must be NA, NULL, or coercible to numeric.", txt))
+}
+x <- "5"
+x <- makeLibArgNumeric(x, errfxn)
+}
 }

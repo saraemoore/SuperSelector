@@ -39,13 +39,23 @@ featureSelector = function(attrs, selector, k, env = parent.frame()) {
     do.call(selector_f, c(list(attrs = attrs), k = k))
 }
 
-#' Short description
+#' Coerce a value to numeric or die trying
 #' 
-#' Long description
+#' Coerce a value to numeric or die trying
 #' 
-#' @param x
-#' @param errorFunction
-#' @return
+#' @param x A value that should be coerced to numeric
+#' @param errorFunction A function which elicits a useful error message if \code{x} cannot be
+#' coerced to numeric
+#' @return \code{x} as numeric, if it was coercible; otherwise, an error is produced.
+#' @export
+#' @examples
+#' \dontrun{
+#' errfxn = function(txt = "") {
+#'   stop(paste("x must be NA, NULL, or coercible to numeric.", txt))
+#' }
+#' x <- "5"
+#' x <- makeLibArgNumeric(x, errfxn)
+#' }
 makeLibArgNumeric = function(x, errorFunction) {
     if(is.na(x))
         x = NULL
@@ -221,9 +231,9 @@ sortWhichVariable <- function(wv_result, feature_names) {
         rename(combo_method = method) # prevent conflicts later
 }
 
-#' Short description
+#' Feature selection via CV.SuperLearner
 #' 
-#' Long description
+#' Feature selection via CV.SuperLearner
 #' 
 #' @param Y Outcome (numeric vector). See \code{\link[SuperLearner]{CV.SuperLearner}}.
 #' @param X Predictor variable(s) (data.frame or matrix). See
@@ -237,17 +247,24 @@ sortWhichVariable <- function(wv_result, feature_names) {
 #' \code{\link[SuperLearner]{CV.SuperLearner}}.
 #' @param method A list of method(s) by which \code{\link[SuperLearner]{CV.SuperLearner}} should
 #' estimate coefficients to combine algorithms.
-#' @param SL.library 
+#' @param SL.library A list of character vectors of length 2, each containing a screener algorithm
+#' and a prediction algorithm. See \code{\link[SuperLearner]{SuperLearner}}.
 #' @param selector.library As SL.library, either a vector of length 2 or a list of such vectors. The first element of each vector should be a string naming a selector function (typically from the \code{\link[FSelector]{FSelector}} package, with a prefix of \code{cutoff.}). The second element of the vector should be the required second argument to the named function (usually named \code{k}), if one exists. If there is no second argument, this second element can be set to \code{NULL} or, equivalently, omitted altogether.
 #' @param nFolds numeric of length 1 or 2. If length(nFolds)==1, the value provided will be used as the number of cross-validation folds for both the outer (\code{\link[SuperLearner]{CV.SuperLearner}}) and inner (SuperLearner) cross-validations. If length(nFolds)==2, the first element or element with name "outer" will be used as the number of folds for the outer (\code{\link[SuperLearner]{CV.SuperLearner}}) cross-validation, and the second element or element with name "inner" will be used as the number of folds for the inner (SuperLearner) cross-validation.
-#' @param trimLogit
-#' @param stratifyCV
-#' @param shuffle
-#' @param validRows
-#' @param weighted
+#' @param trimLogit Only applicable when using the \code{NNloglik} method. See
+#' \code{\link[SuperLearner]{SuperLearner.control}}.
+#' @param stratifyCV Only applicable when \code{Y} is binary. If \code{TRUE},
+#' \code{\link[SuperLearner]{CV.SuperLearner}} will stratify CV splits by \code{Y}. See
+#' \code{\link[SuperLearner]{SuperLearner.CV.control}}.
+#' @param shuffle If \code{TRUE}, rows of \code{X} will be shuffled before being split. See
+#' \code{\link[SuperLearner]{SuperLearner.CV.control}}.
+#' @param validRows A list containing pre-specified rows for the CV splits. See
+#' \code{\link[SuperLearner]{SuperLearner.CV.control}}.
+#' @param weighted Should the weights estimated by the method(s) be used to weight the feature
+#' selection? Passed to \link{extractScreen.CV.SuperLearner}.
 #' @param verbose Print diagnostic messages? Defaults to FALSE
 #' @param label An optional named character vector of length 1. If specified, the value will be added as a column (where the column name is set to \code{names(label)}) in the \code{data.frame} stored in the \code{summary} element of the \code{cvslFull} element of the returned list. One example of when this might be useful is when this function is called from within a cross-validation fold. Then, \code{label} might be set to, for example, \code{c(metafold = fold$v)}.
-#' @param ...
+#' @param ... Passed through to \code{\link[SuperLearner]{CV.SuperLearner}}
 #' @return A named list containing the results of the \code{\link[SuperLearner]{CV.SuperLearner}}
 #' feature selection. Will contain elements \code{whichVariable} (a \code{data.frame}),
 #' \code{summary} (a \code{data.frame}), and cvslFull (a \code{list} containing one result of class

@@ -2,7 +2,7 @@
 % Please edit documentation in R/select.R
 \name{cvSLFeatureSelector}
 \alias{cvSLFeatureSelector}
-\title{Short description}
+\title{Feature selection via CV.SuperLearner}
 \usage{
 cvSLFeatureSelector(
   Y,
@@ -45,15 +45,34 @@ See \code{\link[SuperLearner]{CV.SuperLearner}}.}
 \item{method}{A list of method(s) by which \code{\link[SuperLearner]{CV.SuperLearner}} should
 estimate coefficients to combine algorithms.}
 
-\item{SL.library}{}
+\item{SL.library}{A list of character vectors of length 2, each containing a screener algorithm
+and a prediction algorithm. See \code{\link[SuperLearner]{SuperLearner}}.}
 
 \item{selector.library}{As SL.library, either a vector of length 2 or a list of such vectors. The first element of each vector should be a string naming a selector function (typically from the \code{\link[FSelector]{FSelector}} package, with a prefix of \code{cutoff.}). The second element of the vector should be the required second argument to the named function (usually named \code{k}), if one exists. If there is no second argument, this second element can be set to \code{NULL} or, equivalently, omitted altogether.}
 
 \item{nFolds}{numeric of length 1 or 2. If length(nFolds)==1, the value provided will be used as the number of cross-validation folds for both the outer (\code{\link[SuperLearner]{CV.SuperLearner}}) and inner (SuperLearner) cross-validations. If length(nFolds)==2, the first element or element with name "outer" will be used as the number of folds for the outer (\code{\link[SuperLearner]{CV.SuperLearner}}) cross-validation, and the second element or element with name "inner" will be used as the number of folds for the inner (SuperLearner) cross-validation.}
 
+\item{trimLogit}{Only applicable when using the \code{NNloglik} method. See
+\code{\link[SuperLearner]{SuperLearner.control}}.}
+
+\item{stratifyCV}{Only applicable when \code{Y} is binary. If \code{TRUE},
+\code{\link[SuperLearner]{CV.SuperLearner}} will stratify CV splits by \code{Y}. See
+\code{\link[SuperLearner]{SuperLearner.CV.control}}.}
+
+\item{shuffle}{If \code{TRUE}, rows of \code{X} will be shuffled before being split. See
+\code{\link[SuperLearner]{SuperLearner.CV.control}}.}
+
+\item{validRows}{A list containing pre-specified rows for the CV splits. See
+\code{\link[SuperLearner]{SuperLearner.CV.control}}.}
+
+\item{weighted}{Should the weights estimated by the method(s) be used to weight the feature
+selection? Passed to \link{extractScreen.CV.SuperLearner}.}
+
 \item{verbose}{Print diagnostic messages? Defaults to FALSE}
 
 \item{label}{An optional named character vector of length 1. If specified, the value will be added as a column (where the column name is set to \code{names(label)}) in the \code{data.frame} stored in the \code{summary} element of the \code{cvslFull} element of the returned list. One example of when this might be useful is when this function is called from within a cross-validation fold. Then, \code{label} might be set to, for example, \code{c(metafold = fold$v)}.}
+
+\item{...}{Passed through to \code{\link[SuperLearner]{CV.SuperLearner}}}
 }
 \value{
 A named list containing the results of the \code{\link[SuperLearner]{CV.SuperLearner}}
@@ -62,7 +81,7 @@ feature selection. Will contain elements \code{whichVariable} (a \code{data.fram
 \code{CV.SuperLearner} for each \code{method} supplied).
 }
 \description{
-Long description
+Feature selection via CV.SuperLearner
 }
 \examples{
 \dontrun{
