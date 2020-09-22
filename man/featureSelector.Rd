@@ -7,7 +7,16 @@
 featureSelector(attrs, selector, k, env = parent.frame())
 }
 \arguments{
-\item{env}{Environment in which \code{selector} can be found. Defaults to \code{parent.frame()}.}
+\item{attrs}{Passed on to the selector function}
+
+\item{selector}{A selector function}
+
+\item{k}{Passed on to the selector function}
+
+\item{env}{Environment in which \code{selector} can be found. Defaults to \code{parent.frame()}.
+Note that this means that packages containing selector functions (FSelector, for example) may
+need to be loaded in the parent environment prior to executing code that calls this function.
+(TODO: find a better way)}
 }
 \value{
 The result of applying \code{selector} with argument \code{k} to \code{attrs}.

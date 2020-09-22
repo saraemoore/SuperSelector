@@ -9,6 +9,7 @@
 #' row names. See \code{\link[FSelector]{cutoff.k}}.
 #' @param k A numeric threshold between the min and max of the first column of \code{attrs}.
 #' @return Rownames of the first column of \code{attrs} that exceed \code{k}.
+#' @export
 cutoff.val = function(attrs, k) {
 # TODO: should the values first be normalized before comparing?
 #       is this even valid? should the cutoff instead be some percentile (median?) or mean?
@@ -28,10 +29,13 @@ cutoff.val = function(attrs, k) {
 #' 
 #' Long description
 #' 
-#' @param attrs
-#' @param selector
-#' @param k
+#' @param attrs Passed on to the selector function
+#' @param selector A selector function
+#' @param k Passed on to the selector function
 #' @param env Environment in which \code{selector} can be found. Defaults to \code{parent.frame()}.
+#' Note that this means that packages containing selector functions (FSelector, for example) may
+#' need to be loaded in the parent environment prior to executing code that calls this function.
+#' (TODO: find a better way)
 #' @return The result of applying \code{selector} with argument \code{k} to \code{attrs}.
 featureSelector = function(attrs, selector, k, env = parent.frame()) {
     selector_f <- get(selector, envir = env)

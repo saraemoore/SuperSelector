@@ -1,7 +1,7 @@
 Package: SuperSelector
 Title: Uses CV SuperLearner for Ensembled Feature Selection
-Version: 0.0.8
-Date: 2020-09-07
+Version: 0.0.9
+Date: 2020-09-21
 Authors@R: 
     person(given = "Sara",
            family = "Moore",
@@ -30,6 +30,7 @@ Imports:
     MASS,
     RColorBrewer
 Suggests:
+    FSelector
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
