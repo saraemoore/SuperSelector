@@ -442,7 +442,7 @@ cvSLVarImpPlot2 = function(res,
     }
 
     p <- p + labs(x = featLab, y = valLab, title = title, subtitle = subtitle) +
-        ylim(0, 1) +
+        scale_y_continuous(valLab, limits = c(0, 1), labels = scales::percent) +
         varImpTheme %+replace% theme(panel.border = element_rect(fill = NA, colour = "black"))
 
     p <- if(is.null(panelCol)) {

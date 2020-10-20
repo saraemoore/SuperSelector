@@ -1,7 +1,7 @@
 Package: SuperSelector
 Title: Uses CV SuperLearner for Ensembled Feature Selection
-Version: 0.0.9
-Date: 2020-09-21
+Version: 0.0.10
+Date: 2020-10-06
 Authors@R: 
     person(given = "Sara",
            family = "Moore",
