@@ -1,3 +1,7 @@
+escaped_percent <- function(x) {
+    scales::percent(x, suffix = "\\%")
+}
+
 ################################################################################
 # FEATURE SELECTION VISUALIZATION
 
@@ -247,7 +251,7 @@ cvSLVarImpPlot = function(res,
                           featLabs = NULL,
                           panelLabs = NULL,
                           # jitter_vertical = 0.08,
-                          varImpTheme = theme_bw() + theme(plot.title = element_text(hjust = 0.5),
+                          varImpTheme = theme_bw(base_size = 10) + theme(plot.title = element_text(hjust = 0.5),
                                                            plot.subtitle = element_text(hjust = 0.5),
                                                            legend.position = "none",
                                                            panel.grid.major.x = element_blank(),
@@ -259,7 +263,15 @@ cvSLVarImpPlot = function(res,
                           subtitle = NULL,
                           panelCol = NULL,
                           shapeCol = NULL,
-                          addSummary = TRUE) {
+                          addSummary = TRUE,
+                          x_breaks = waiver(),
+                          tikz_output = FALSE) {
+
+    pct_formatter <- if(tikz_output) {
+        escaped_percent
+    } else {
+        scales::percent
+    }
 
     if(!valCol %in% colnames(res)) {
         stop("valCol is not a column in res. Check valCol.")
@@ -299,13 +311,19 @@ cvSLVarImpPlot = function(res,
 
     p <- if(is.null(shapeCol)) {
         p +
-            scale_x_continuous(valLab, limits = c(0, 1), labels = scales::percent) +
+            scale_x_continuous(valLab,
+                limits = c(0, 1),
+                labels = pct_formatter,
+                breaks = x_breaks) +
             # geom_jitter(width = 0, height = jitter_vertical, alpha = 0.6)
             geom_beeswarm(size = pointSize, stroke = strokeSize, color = maxColor, alpha = 0.6, groupOnX = FALSE)
     } else {
         one_code = 49
         p +
-            scale_x_continuous(valLab, limits = c(-0.1, 1), labels = scales::percent) +
+            scale_x_continuous(valLab,
+                limits = c(-0.1, 1),
+                labels = pct_formatter,
+                breaks = x_breaks) +
             # geom_jitter(width = 0, height = jitter_vertical, alpha = 0.6, size = 2) +
             geom_beeswarm(aes_string(shape = shapeCol), size = pointSize, stroke = strokeSize, color = maxColor, alpha = 0.6, groupOnX = FALSE) +
             # geom_point() +
@@ -380,7 +398,7 @@ cvSLVarImpPlot2 = function(res,
                            valLab = "Proportion of CVSL folds in which feature was selected", #"Feature passed screener"
                            catCol = "screener",
                            catLab = "Screening algorithm", #"Filter and weight combination methods"
-                           varImpTheme = theme_classic() + theme(plot.title = element_text(hjust = 0.5),
+                           varImpTheme = theme_classic(base_size = 10) + theme(plot.title = element_text(hjust = 0.5),
                                                                  plot.subtitle = element_text(hjust = 0.5),
                                                                  legend.position = "none", #"bottom",
                                                                  axis.text.x = element_text(angle = 60, hjust = 1, vjust = 1)), # , size = 8
@@ -391,7 +409,15 @@ cvSLVarImpPlot2 = function(res,
                            subtitle = NULL,
                            panelCol = NULL,
                            panelLabs = NULL,
-                           shapeCol = NULL) {
+                           shapeCol = NULL,
+                           y_breaks = waiver(),
+                           tikz_output = FALSE) {
+
+    pct_formatter <- if(tikz_output) {
+        escaped_percent
+    } else {
+        scales::percent
+    }
 
     res[,featCol] = featReorderAndFactorize(res[,featCol], res[,valCol], featLabs, rev = FALSE)
     res[,catCol] = as.factor(res[,catCol])
@@ -442,7 +468,10 @@ cvSLVarImpPlot2 = function(res,
     }
 
     p <- p + labs(x = featLab, y = valLab, title = title, subtitle = subtitle) +
-        scale_y_continuous(valLab, limits = c(0, 1), labels = scales::percent) +
+        scale_y_continuous(valLab,
+            limits = c(0, 1),
+            labels = pct_formatter,
+            breaks = y_breaks) +
         varImpTheme %+replace% theme(panel.border = element_rect(fill = NA, colour = "black"))
 
     p <- if(is.null(panelCol)) {
