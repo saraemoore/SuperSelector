@@ -1,6 +1,6 @@
 Package: SuperSelector
-Title: Uses CV SuperLearner for Ensembled Feature Selection
-Version: 0.1.0
+Title: Ensembled Feature Selection using Cross-Validated SuperLearner
+Version: 0.1.1
 Date: 2023-11-02
 Authors@R: 
     person(given = "Sara",

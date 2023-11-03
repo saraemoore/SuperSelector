@@ -1,0 +1,11 @@
+citHeader("To cite SuperSelector in publications use:")
+
+bibentry(
+  key      = "SuperSelector",
+  bibtype  = "Manual",
+  title    = "Ensembled Feature Selection using Cross-Validated SuperLearner",
+  author   = c(person("Sara", "Moore")),
+  note     = "R package version 0.1.1",
+  year     = "2023",
+  url      = "https://github.com/saraemoore/SuperSelector"
+)
