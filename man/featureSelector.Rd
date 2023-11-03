@@ -2,14 +2,14 @@
 % Please edit documentation in R/select.R
 \name{featureSelector}
 \alias{featureSelector}
-\title{Short description}
+\title{Applies a feature selection function by name}
 \usage{
 featureSelector(attrs, selector, k, env = parent.frame())
 }
 \arguments{
 \item{attrs}{Passed on to the selector function}
 
-\item{selector}{A selector function}
+\item{selector}{A selector function (character string).}
 
 \item{k}{Passed on to the selector function}
 
@@ -22,5 +22,5 @@ need to be loaded in the parent environment prior to executing code that calls t
 The result of applying \code{selector} with argument \code{k} to \code{attrs}.
 }
 \description{
-Long description
+Applies a feature selection function by name
 }

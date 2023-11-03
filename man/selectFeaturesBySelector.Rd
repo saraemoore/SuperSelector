@@ -2,16 +2,31 @@
 % Please edit documentation in R/select.R
 \name{selectFeaturesBySelector}
 \alias{selectFeaturesBySelector}
-\title{Short description}
+\title{Apply \code{metaFeatSel} to contents of a \code{data.frame}}
 \usage{
 selectFeaturesBySelector(df, sel, propCol, verbose)
 }
 \arguments{
-\item{verbose}{logical; passthru to metaFeatSel}
+\item{df}{A \code{data.frame} containing summarized feature selection results
+from \code{CV.SuperLearner}; expected to contain at least columns named
+"term" and the value of \code{propCol}.}
+
+\item{sel}{A \code{data.frame} with 2 columns: "selector" and
+"k". The "selector" column should contain strings naming selector functions
+(typically from the \code{\link[FSelector]{FSelector}} package, with a prefix
+of \code{cutoff.}). The "k" column should be the required second argument to
+the named "selector" function (usually named \code{k}), if one exists. If
+there is no second argument, column "k" should be set to \code{NA}. Rownames
+will be utilized if they are included.}
+
+\item{propCol}{character string; should correspond to a column name in
+\code{df}}
+
+\item{verbose}{boolean; passed through to \link{metaFeatSel}}
 }
 \value{
-
+A \code{data.frame}
 }
 \description{
-Long description
+Apply \code{metaFeatSel} to contents of a \code{data.frame}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/select.R
 \name{cvSLFeatureSelector}
 \alias{cvSLFeatureSelector}
-\title{Feature selection via CV.SuperLearner}
+\title{Feature selection via \code{CV.SuperLearner}}
 \usage{
 cvSLFeatureSelector(
   Y,
@@ -48,7 +48,7 @@ estimate coefficients to combine algorithms.}
 \item{SL.library}{A list of character vectors of length 2, each containing a screener algorithm
 and a prediction algorithm. See \code{\link[SuperLearner]{SuperLearner}}.}
 
-\item{selector.library}{As SL.library, either a vector of length 2 or a list of such vectors. The first element of each vector should be a string naming a selector function (typically from the \code{\link[FSelector]{FSelector}} package, with a prefix of \code{cutoff.}). The second element of the vector should be the required second argument to the named function (usually named \code{k}), if one exists. If there is no second argument, this second element can be set to \code{NULL} or, equivalently, omitted altogether.}
+\item{selector.library}{A \code{data.frame} with 2 columns: "selector" and "k". The "selector" column should contain strings naming selector functions (typically from the \code{\link[FSelector]{FSelector}} package, with a prefix of \code{cutoff.}). The "k" column should be the required second argument to the named "selector" function (usually named \code{k}), if one exists. If there is no second argument, column "k" should be set to \code{NA}. Rownames will be utilized if they are included.}
 
 \item{nFolds}{numeric of length 1 or 2. If length(nFolds)==1, the value provided will be used as the number of cross-validation folds for both the outer (\code{\link[SuperLearner]{CV.SuperLearner}}) and inner (SuperLearner) cross-validations. If length(nFolds)==2, the first element or element with name "outer" will be used as the number of folds for the outer (\code{\link[SuperLearner]{CV.SuperLearner}}) cross-validation, and the second element or element with name "inner" will be used as the number of folds for the inner (SuperLearner) cross-validation.}
 
@@ -81,14 +81,16 @@ feature selection. Will contain elements \code{whichVariable} (a \code{data.fram
 \code{CV.SuperLearner} for each \code{method} supplied).
 }
 \description{
-Feature selection via CV.SuperLearner
+Feature selection via \code{CV.SuperLearner}
 }
 \examples{
 \dontrun{
 # remotes::install_github('osofr/simcausal', build_vignettes = FALSE)
 dat <- sim_toy_data(n_obs = 200, rnd_seed = 620)
-res <- cvSLFeatureSelector(dat \%>\% pull(Y), dat \%>\% select(-c(ID, Y)), family = binomial(),
-                           method = "method.NNloglik",
+library(SuperLearner)  # for SL.mean, etc.
+library(FSelector) # for cutoff.biggest.diff, etc.
+res <- cvSLFeatureSelector(dat$Y, dat[,-which(colnames(dat) \%in\% c("ID", "Y"))],
+                           family = binomial(), method = "method.NNloglik",
                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
                                                       c("SL.mean", "screen.earth.backwardprune")),
                                                  c("random forest biggest diff mean",
@@ -104,8 +106,8 @@ res <- cvSLFeatureSelector(dat \%>\% pull(Y), dat \%>\% select(-c(ID, Y)), famil
 
 # based on example in SuperLearner package
 dat <- sim_sl_data(n_obs = 100, rnd_seed = 1)
-res <- cvSLFeatureSelector(dat \%>\% pull(Y), dat \%>\% select(-c(ID, Y)), family = gaussian(),
-                           method = "method.NNLS",
+res <- cvSLFeatureSelector(dat$Y, dat[,-which(colnames(dat) \%in\% c("ID", "Y"))],
+                           family = gaussian(), method = "method.NNLS",
                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
                                                       c("SL.mean", "screen.earth.backwardprune")),
                                                  c("random forest biggest diff mean",

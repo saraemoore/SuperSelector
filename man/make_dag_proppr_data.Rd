@@ -6,6 +6,10 @@
 \usage{
 make_dag_proppr_data(outcome_name = "Y")
 }
+\arguments{
+\item{outcome_name}{Character string containing the name of the outcome
+variable. Defaults to \code{"Y"} if not specified.}
+}
 \value{
 A \code{DAG} object as defined by the \code{simcausal} package.
 }

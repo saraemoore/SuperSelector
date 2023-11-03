@@ -2,17 +2,20 @@
 % Please edit documentation in R/summarize.R
 \name{summarizeScreen}
 \alias{summarizeScreen}
-\title{Short description}
+\title{Summarize "summary" element of \code{cvSLFeatureSelector}}
 \usage{
 summarizeScreen(
   res,
   groupCols = c("method", "predictor", "screener"),
-  collapseCols = NULL,
   discrete = FALSE
 )
 }
 \arguments{
-\item{res}{The \code{summary} element of the result of CV SuperLearner feature selection.}
+\item{res}{The \code{data.frame} "summary" element of a
+\link{cvSLFeatureSelector} result}
+
+\item{groupCols}{Column names of \code{res} (as a character vector) to group
+by before summarizing.}
 
 \item{discrete}{If \code{TRUE}, instead of summarizing, simply return rows in \code{res} where
 \code{discrete} is \code{TRUE}. Defaults to \code{FALSE}.}
@@ -21,7 +24,7 @@ summarizeScreen(
 A \code{data.frame}
 }
 \description{
-Long description
+Summarize "summary" element of \code{cvSLFeatureSelector}
 }
 \examples{
 \dontrun{
@@ -42,6 +45,6 @@ res <- cvSLFeatureSelector(dat \%>\% pull(Y), dat \%>\% select(-c(ID, Y)), famil
                            nFolds = 3,
                            verbose = TRUE)
 summarizeScreen(res$summary, groupCols = c("method", "screener"))
-summarizeScreen(res$summary, groupCols = c("method", "screener"), collapseCols = "screener")
+summarizeScreen(res$summary, groupCols = "method")
 }
 }

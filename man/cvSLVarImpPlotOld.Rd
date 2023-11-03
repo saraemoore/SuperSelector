@@ -2,16 +2,20 @@
 % Please edit documentation in R/visualize.R
 \name{cvSLVarImpPlotOld}
 \alias{cvSLVarImpPlotOld}
-\title{Short description}
+\title{A defunct visualization of the summarized result from \code{cvSLFeatureSelector}}
 \usage{
 cvSLVarImpPlotOld(res, feat.labs, multifold = TRUE)
 }
 \arguments{
 \item{res}{was cvsl.var.imp.all}
+
+\item{feat.labs}{feature labels}
+
+\item{multifold}{boolean}
 }
 \value{
-A list of ggplots
+A list of \code{ggplot}s
 }
 \description{
-Long description
+A defunct visualization of the summarized result from \code{cvSLFeatureSelector}
 }

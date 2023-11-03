@@ -2,18 +2,21 @@
 % Please edit documentation in R/select.R
 \name{groupBySelectionSet}
 \alias{groupBySelectionSet}
-\title{Short description}
+\title{Dedupe/summarize "whichVariable" element of \code{cvSLFeatureSelector} result}
 \usage{
 groupBySelectionSet(res)
 }
 \arguments{
-\item{res}{returned from cvSLFeatureSelector()}
+\item{res}{\code{list} result from \link{cvSLFeatureSelector}. Expected
+to contain a \code{data.frame} element named "whichVariable".}
 }
 \value{
-
+The "whichVariable" \code{data.frame}, deduped/summarized by the
+"keep_bin" column and with the "combo_method", "selector", and "k" columns
+converted to list-columns.
 }
 \description{
-Long description
+Dedupe/summarize "whichVariable" element of \code{cvSLFeatureSelector} result
 }
 \examples{
 \dontrun{

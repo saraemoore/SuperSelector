@@ -19,8 +19,6 @@ sim_proppr_data(
 \item{outcome_name}{Name of outcome column (only impacts DAG output)}
 
 \item{verbose}{Print diagnostic messages? Defaults to FALSE}
-
-\item{test_prop}{Proportion of \code{n_obs} labeled as 'test'}
 }
 \value{
 A \code{data.frame} with columns \code{ID}, \code{W1:4}, \code{GCS}, \code{Age},

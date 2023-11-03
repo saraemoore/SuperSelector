@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulate.R
 \name{plot_heatmap_sim_data}
 \alias{plot_heatmap_sim_data}
-\title{Short description}
+\title{A heatmap displaying observation-level features and outcome}
 \usage{
 plot_heatmap_sim_data(dat)
 }
@@ -10,10 +10,10 @@ plot_heatmap_sim_data(dat)
 \item{dat}{A \code{data.frame} with outcome column \code{Y} and ID column \code{ID}.}
 }
 \value{
-A ggplot
+A \code{ggplot}
 }
 \description{
-Longer description
+A heatmap displaying observation-level features and outcome
 }
 \examples{
 \dontrun{
