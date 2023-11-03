@@ -23,8 +23,7 @@ The SuperSelector package is currently only available via GitHub. To
 install:
 
 ``` r
-# remotes::install_github("saraemoore/SuperSelector")
-devtools::install("~/Documents/SuperSelector")
+remotes::install_github("saraemoore/SuperSelector")
 ```
 
 Examples
