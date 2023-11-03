@@ -14,12 +14,12 @@ escaped_percent <- function(x) {
 #' @param featLabs A named character vector containing factor labels. Can be \code{NULL}.
 #' @param rev Should the factor be sorted in ascending order by val? Defaults to \code{TRUE}.
 #' @return factorized version of \code{feat}
-#' @importFrom dplyr arrange desc summarize group_by
+#' @importFrom dplyr arrange desc summarize group_by across
 #' @importFrom magrittr `%>%`
 featReorderAndFactorize = function(feat, val, featLabs, rev = TRUE) {
     resOrdered = data.frame(feat = feat, val = val) %>%
-        group_by(feat) %>%
-        dplyr::summarize(val = mean(val))
+        group_by(across(c("feat"))) %>%
+        dplyr::summarize(across(all_of("val"), mean, .names = "{.col}"))
     resOrdered <- if(rev) {
         arrange(resOrdered, val)
     } else {
@@ -38,18 +38,17 @@ featReorderAndFactorize = function(feat, val, featLabs, rev = TRUE) {
     factor(featLevels, levels = featLevelsNew, labels = featLabs, ordered = TRUE)
 }
 
-#' Short description
-#' 
-#' Long description
+#' A defunct visualization of the summarized result from \code{cvSLFeatureSelector}
 #' 
 #' @param res was cvsl.var.imp.all
-#' @param feat.labs
-#' @param multifold
-#' @return A list of ggplots
+#' @param feat.labs feature labels
+#' @param multifold boolean
+#' @return A list of \code{ggplot}s
 #' @importFrom reshape2 melt
-#' @importFrom dplyr group_by summarize rename filter select
+#' @importFrom dplyr group_by summarize rename filter select across
 #' @importFrom magrittr `%>%`
 #' @importFrom stats median
+#' @importFrom rlang .data
 #' @import ggplot2
 cvSLVarImpPlotOld = function(res, feat.labs, multifold = TRUE) {
         # store the ggplots here:
@@ -58,19 +57,21 @@ cvSLVarImpPlotOld = function(res, feat.labs, multifold = TRUE) {
 
     res = reshape2::melt(res)
     if(multifold) {
-        res <- res %>% rename(`cv.fold` = L1, `cv.sl.combo.method` = L2)
+        res <- res %>% rename(all_of(c(`cv.fold` = "L1", `cv.sl.combo.method` = "L2")))
     } else {
         # double check this
-        res <- res %>% rename(`cv.sl.combo.method` = L1)
+        res <- res %>% rename(all_of(c(`cv.sl.combo.method` = "L1")))
     }
     res$cv.sl.combo.method = as.factor(res$cv.sl.combo.method)
 
     cvsl.var.imp.summ = res %>%
-        group_by(cv.sl.combo.method, var) %>%
-        dplyr::summarize(mean.val = mean(value))
+        group_by(across(c("cv.sl.combo.method", "var"))) %>%
+        dplyr::summarize(across(all_of("value"), mean, .names = "mean.val"))
 
     feat.labs.df = data.frame(var = names(feat.labs), lab = unname(feat.labs))
-    feat.labs.wgtd = merge(cvsl.var.imp.summ %>% filter(cv.sl.combo.method=="wgtd.total") %>% select(var, mean.val),
+    feat.labs.wgtd = merge(cvsl.var.imp.summ %>%
+                            filter(.data[["cv.sl.combo.method"]]=="wgtd.total") %>%
+                            select(all_of(c("var", "mean.val"))),
         feat.labs.df, by="var", all.x=TRUE)
     feat.labs.wgtd = feat.labs.wgtd[order(feat.labs.wgtd$mean.val, decreasing=FALSE),]
     res$lab = factor(as.character(res$var),
@@ -80,9 +81,12 @@ cvSLVarImpPlotOld = function(res, feat.labs, multifold = TRUE) {
 
     # diagnostic plots
     if(multifold){
-        diag.plots[[1]] = ggplot(data=subset(res, cv.sl.combo.method=="weighted"), aes(x=value, y=lab, shape = as.factor(cv.fold)))
+        diag.plots[[1]] = ggplot(data = res %>% filter(.data[["cv.sl.combo.method"]]=="weighted"),
+                                 aes(x = .data[["value"]], y = .data[["lab"]],
+                                     shape = as.factor(.data[["cv.fold"]])))
     }else{
-        diag.plots[[1]] = ggplot(data=subset(res, cv.sl.combo.method=="weighted"), aes(x=value, y=lab))
+        diag.plots[[1]] = ggplot(data = res %>% filter(.data[["cv.sl.combo.method"]]=="weighted"),
+                                 aes(x = .data[["value"]], y = .data[["lab"]]))
     }
     diag.plots[[1]] = diag.plots[[1]] +
         geom_point() +
@@ -95,13 +99,17 @@ cvSLVarImpPlotOld = function(res, feat.labs, multifold = TRUE) {
         ggtitle("Weighted CV SL Variable Importance\n(Algorithm's CV SL coef.) x (prop. of CV folds where feature was selected)")
 
     if(multifold){
-        diag.plots[[3]] = ggplot(data=subset(res, cv.sl.combo.method=="wgtd.total"), aes(x=value, y=lab, shape = as.factor(cv.fold)))
+        diag.plots[[3]] = ggplot(data = res %>% filter(.data[["cv.sl.combo.method"]]=="wgtd.total"),
+                                 aes(x = .data[["value"]], y = .data[["lab"]],
+                                     shape = as.factor(.data[["cv.fold"]])))
     } else{
-        diag.plots[[3]] = ggplot(data=subset(res, cv.sl.combo.method=="wgtd.total"), aes(x=value, y=lab))
+        diag.plots[[3]] = ggplot(data = res %>% filter(.data[["cv.sl.combo.method"]]=="wgtd.total"),
+                                 aes(x = .data[["value"]], y = .data[["lab"]]))
     }
     diag.plots[[3]] = diag.plots[[3]] +
-        geom_vline(xintercept = c(median(subset(res, cv.sl.combo.method=="wgtd.total")$value),
-            mean(subset(res, cv.sl.combo.method=="wgtd.total")$value)), colour="grey80", linetype = "longdash") +
+        geom_vline(xintercept = c(median(res %>% filter(.data[["cv.sl.combo.method"]]=="wgtd.total")$value),
+                                  mean(res %>% filter(.data[["cv.sl.combo.method"]]=="wgtd.total")$value)),
+                   color = "grey80", linetype = "longdash") +
         geom_point() +
         # theme_classic(base_family = "opensans") +
         # theme_bw(base_family = "opensans") +
@@ -119,7 +127,10 @@ cvSLVarImpPlotOld = function(res, feat.labs, multifold = TRUE) {
     #   scale_shape_manual(values=c(3,4,21,22))
         # scale_shape_manual(values=c(3,4,21,22,24))
 
-    feat.labs.unwgtd = merge(subset(cvsl.var.imp.summ, cv.sl.combo.method=="unwgtd.total")[,c("var","mean.val")], feat.labs.df, by="var", all.x=TRUE)
+    feat.labs.unwgtd = merge(cvsl.var.imp.summ %>%
+                                filter(.data[["cv.sl.combo.method"]]=="unwgtd.total") %>%
+                                select(all_of(c("var", "mean.val"))),
+                             feat.labs.df, by="var", all.x=TRUE)
     feat.labs.unwgtd = feat.labs.unwgtd[order(feat.labs.unwgtd$mean.val, decreasing=FALSE),]
     res$lab = factor(as.character(res$var),
         levels=as.character(feat.labs.unwgtd$var),
@@ -127,13 +138,17 @@ cvSLVarImpPlotOld = function(res, feat.labs, multifold = TRUE) {
         ordered=TRUE)
 
     if(multifold){
-        diag.plots[[2]] = ggplot(data=subset(res, cv.sl.combo.method=="unwgtd.total"), aes(x=value, y=lab, shape = as.factor(cv.fold)))
+        diag.plots[[2]] = ggplot(data = res %>% filter(.data[["cv.sl.combo.method"]]=="unwgtd.total"),
+                                 aes(x = .data[["value"]], y = .data[["lab"]],
+                                     shape = as.factor(.data[["cv.fold"]])))
     }else{
-        diag.plots[[2]] = ggplot(data=subset(res, cv.sl.combo.method=="unwgtd.total"), aes(x=value, y=lab))
+        diag.plots[[2]] = ggplot(data = res %>% filter(.data[["cv.sl.combo.method"]]=="unwgtd.total"),
+                                 aes(x = .data[["value"]], y = .data[["lab"]]))
     }
     diag.plots[[2]] = diag.plots[[2]] +
-        geom_vline(xintercept = c(median(subset(res, cv.sl.combo.method=="unwgtd.total")$value),
-            mean(subset(res, cv.sl.combo.method=="unwgtd.total")$value)), colour="grey80", linetype = "longdash") +
+        geom_vline(xintercept = c(median(res %>% filter(.data[["cv.sl.combo.method"]]=="unwgtd.total")$value),
+                                  mean(res %>% filter(.data[["cv.sl.combo.method"]]=="unwgtd.total")$value)),
+                   color="grey80", linetype = "longdash") +
         geom_point() +
         # theme_bw(base_family = "opensans") +
         # theme_classic(base_family = "opensans") +
@@ -194,31 +209,51 @@ cvSLVarImpPlotOld = function(res, feat.labs, multifold = TRUE) {
     #   ggtitle("Weighted CV SL Variable Importance\n(Algorithm's CV SL coef.) x (prop. of CV folds where feature was selected)")
     # diag.plots[[1]] = diag.plots[[1]] + scale_shape_manual(values = 48:57)
 
-#' Short description
+#' Visualize the summarized result from \code{cvSLFeatureSelector}
 #' 
-#' Long description
-#' 
-#' @param res
-#' @param featCol
-#' @param valCol
-#' @param valLab
-#' @param labelVals
-#' @param featLabs
-#' @param panelLabs
-#' @param varImpTheme
-#' @param pointSize
-#' @param strokeSize
-#' @param maxColor
-#' @param title
-#' @param subtitle
-#' @param panelCol
-#' @param shapeCol
-#' @param addSummary
-#' @return
+#' @param res A \code{data.frame} containing at least the columns specified in
+#' \code{featCol} and \code{valCol}, and, if specified, \code{panelCol} and
+#' \code{shapeCol}.
+#' @param featCol A character string corresponding to a column name of
+#' \code{res} containing the feature/predictor variable name. Defaults to
+#' "term".
+#' @param valCol A character string corresponding to a column name of
+#' \code{res} containing the value to be plotted on the horizontal axis.
+#' Defaults to "propFoldSel".
+#' @param valLab A character string containing the horizontal axis label.
+#' Defaults to "Fraction of CVSL folds in which feature was selected".
+#' @param labelVals A boolean indicating whether rounded values should be used
+#' for the horizontal axis tick labels. Defaults to \code{TRUE}.
+#' @param featLabs An optional named character vector containing feature labels.
+#' @param panelLabs An optional named character vector containing panel labels.
+#' @param varImpTheme A ggplot theme for the plot.
+#' @param pointSize The point size for the plot. Defaults to \code{2}.
+#' @param strokeSize The line thickness for the plot. Defaults to \code{1}.
+#' @param maxColor The darkest color of the scatterplot points, to which a 60%
+#' transparency will be applied for visibility under overplotting conditions.
+#' Defaults to \code{"grey10"}.
+#' @param title An optional title for the plot. Defaults to
+#' "CV SuperLearner Variable Importance".
+#' @param subtitle An optional subtitle for the plot. If not provided, no
+#' subtitle will appear on the plot.
+#' @param panelCol An optional character string corresponding to a column name
+#' of \code{res} containing the variable to use for plot paneling. If omitted,
+#' a single plot will be produced. If set, typically set to "method".
+#' @param shapeCol An optional character string corresponding to a column name
+#' of \code{res} containing the variable to use for scatterplot point shapes.
+#' If omitted, a single default shape will be used. If set, typically set to
+#' "fold".
+#' @param addSummary A boolean indicating whether the median and mean of
+#' \code{valCol} should be represented on the plot. Defaults to \code{TRUE}.
+#' @param x_breaks An optional vector of breaks to use on the horizontal axis.
+#' @param tikz_output A boolean indicating whether percent symbols should be
+#' escaped. Defaults to \code{FALSE}.
+#' @return A \code{ggplot}
 #' @importFrom scales percent
 #' @importFrom stats median
 #' @import ggplot2
 #' @importFrom ggbeeswarm geom_beeswarm
+#' @importFrom rlang .data
 #' @export
 #' @examples
 #' \dontrun{
@@ -338,34 +373,55 @@ cvSLVarImpPlot = function(res,
         valSumm = c(median(res[,valCol]), mean(res[,valCol]))
         p = p + geom_vline(xintercept = valSumm, colour = "grey80", linetype = "longdash") +
             geom_text(data = data.frame(x = valSumm, y = 0, label = c("median", "mean")),
-                      aes(label = label, x = x, y = y),
-                      vjust = 0, hjust = 0, angle = 90)
+                      aes(label = .data[["label"]], x = .data[["x"]], y = .data[["y"]]),
+                          vjust = 0, hjust = 0, angle = 90)
     }
     return(p)
 }
 
-#' Short description
+#' An alternative visualization of the summarized result from \code{cvSLFeatureSelector}
 #' 
-#' Long description
-#' 
-#' @param res
-#' @param featCol
-#' @param featLab
-#' @param featLabs
-#' @param valCol
-#' @param valLab
-#' @param catCol
-#' @param catLab
-#' @param varImpTheme
-#' @param pointSize
-#' @param strokeSize
-#' @param maxColor
-#' @param title
-#' @param subtitle
-#' @param panelCol
-#' @param panelLabs
-#' @param shapeCol
-#' @return
+#' @param res A \code{data.frame} containing at least the columns specified in
+#' \code{featCol}, \code{valCol}, and \code{catCol} and, if specified,
+#' \code{panelCol} and \code{shapeCol}.
+#' @param featCol A character string corresponding to a column name of
+#' \code{res} containing the feature/predictor variable name. Defaults to
+#' "term".
+#' @param featLab An optional character string containing the horizontal axis
+#' label. Defaults to "Feature name".
+#' @param featLabs An optional named character vector containing feature labels.
+#' @param valCol A character string corresponding to a column name of
+#' \code{res} containing the value to be plotted on the vertical axis.
+#' Defaults to "propFoldSel".
+#' @param valLab A character string containing the vertical axis label.
+#' Defaults to "Proportion of CVSL folds in which feature was selected".
+#' @param catCol A character string corresponding to a column name of
+#' \code{res} containing the variable to use for vertical plot paneling.
+#' Defaults to "screener".
+#' @param catLab A character string containing the vertical plot paneling
+#' label. Defaults to "Screening algorithm".
+#' @param varImpTheme A ggplot theme for the plot.
+#' @param pointSize The point size for the plot. Defaults to \code{2}.
+#' @param strokeSize The line thickness for the plot. Defaults to \code{1}.
+#' @param maxColor The darkest color of the scatterplot points. Defaults to
+#' \code{"grey10"}.
+#' @param title An optional title for the plot. Defaults to
+#' "CV SuperLearner Variable Importance".
+#' @param subtitle An optional subtitle for the plot. If not provided, no
+#' subtitle will appear on the plot.
+#' @param panelCol An optional character string corresponding to a column name
+#' of \code{res} containing the variable to use for horizontal plot paneling. If
+#' omitted, the resulting plot will only be paneled vertically.
+#' @param panelLabs An optional named character vector containing labels for
+#' the vertical panels.
+#' @param shapeCol An optional character string corresponding to a column name
+#' of \code{res} containing the variable to use for scatterplot point shapes.
+#' If omitted, a single default shape will be used. If set, typically set to
+#' "fold".
+#' @param y_breaks An optional vector of breaks to use on the vertical axis.
+#' @param tikz_output A boolean indicating whether percent symbols should be
+#' escaped. Defaults to \code{FALSE}.
+#' @return A \code{ggplot}
 #' @import ggplot2
 #' @importFrom ggbeeswarm geom_beeswarm
 #' @export

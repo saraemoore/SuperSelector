@@ -2,13 +2,22 @@
 % Please edit documentation in R/simulate.R
 \name{ggally_custom_smooth}
 \alias{ggally_custom_smooth}
-\title{Short description}
+\title{A custom smoother for a \code{GGally::ggpairs()} plot}
 \usage{
 ggally_custom_smooth(data, mapping, ..., method = "lm")
 }
-\value{
+\arguments{
+\item{data}{data set using}
 
+\item{mapping}{aesthetics being used}
+
+\item{...}{other arguments to add to \code{\link[ggplot2]{geom_point}}}
+
+\item{method}{parameters supplied to \code{\link[ggplot2]{geom_smooth}}}
+}
+\value{
+A \code{ggplot}
 }
 \description{
-Longer description
+A custom smoother for a \code{GGally::ggpairs()} plot
 }

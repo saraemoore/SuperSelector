@@ -2,7 +2,7 @@
 % Please edit documentation in R/select.R
 \name{is_not_homogenous}
 \alias{is_not_homogenous}
-\title{Short description}
+\title{Assess whether \code{x} contains multiple unique values}
 \usage{
 is_not_homogenous(x)
 }
@@ -10,8 +10,8 @@ is_not_homogenous(x)
 \item{x}{a vector}
 }
 \value{
-logical
+A boolean
 }
 \description{
-Long description
+Assess whether \code{x} contains multiple unique values
 }

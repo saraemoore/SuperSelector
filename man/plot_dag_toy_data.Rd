@@ -10,7 +10,7 @@ plot_dag_toy_data()
 DAG visualization
 }
 \description{
-Plot DAG for a toy example of ...
+Plot DAG for a toy example
 }
 \examples{
 \dontrun{

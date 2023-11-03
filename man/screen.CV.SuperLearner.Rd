@@ -6,14 +6,39 @@
 \usage{
 screen.CV.SuperLearner(Y, X, family, obsWeights, id, ...)
 }
-\value{
+\arguments{
+\item{Y}{Outcome (numeric vector). See \code{\link[SuperLearner]{CV.SuperLearner}}
+for specifics.}
 
+\item{X}{Predictor variable(s) (data.frame or matrix). See
+\code{\link[SuperLearner]{CV.SuperLearner}} for specifics.}
+
+\item{family}{Error distribution to be used in the model:
+\code{\link[stats]{gaussian}} or \code{\link[stats]{binomial}}.
+See \code{\link[SuperLearner]{CV.SuperLearner}} for specifics.}
+
+\item{obsWeights}{Optional numeric vector of observation weights. See
+\code{\link[SuperLearner]{CV.SuperLearner}} for specifics.}
+
+\item{id}{Cluster identification variable. See
+\code{\link[SuperLearner]{CV.SuperLearner}} for specifics.}
+
+\item{...}{Other arguments to be passed through to
+\code{\link{cvSLFeatureSelector}}.}
+}
+\value{
+A boolean vector with length equal to \code{ncol(X)}
 }
 \description{
-Long description
+Convenience function providing an interface to \code{cvSLFeatureSelector}
+from \code{\link[SuperLearner]{SuperLearner}} via a screening function.
 }
 \examples{
 \dontrun{
-screen.CV.SuperLearner(Y, X, family = binomial(), obsWeights = NULL, id = NULL, verbose = TRUE)
+# based on example in SuperLearner package
+n <- 500
+dat <- sim_sl_data(n_obs = n, rnd_seed = 1)
+screen.CV.SuperLearner(dat$Y, dat[,-which(colnames(dat) \%in\% c("ID", "Y"))],
+                       family = gaussian(), obsWeights = NULL, id = dat$ID, verbose = TRUE)
 }
 }

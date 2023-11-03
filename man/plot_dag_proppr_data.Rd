@@ -10,7 +10,7 @@ plot_dag_proppr_data()
 DAG visualization
 }
 \description{
-Plot DAG for PROPPR example of ...
+Plot DAG for PROPPR example
 }
 \examples{
 \dontrun{

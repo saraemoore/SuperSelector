@@ -1,12 +1,10 @@
-#' Short description
+#' A custom smoother for a \code{GGally::ggpairs()} plot
 #' 
-#' Longer description
-#' 
-#' @param data
-#' @param mapping
-#' @param ...
-#' @param method
-#' @return
+#' @param data data set using
+#' @param mapping aesthetics being used
+#' @param ... other arguments to add to \code{\link[ggplot2]{geom_point}}
+#' @param method parameters supplied to \code{\link[ggplot2]{geom_smooth}}
+#' @return A \code{ggplot}
 #' @importFrom ggplot2 ggplot geom_point geom_smooth
 ggally_custom_smooth <- function (data, mapping, ..., method = "lm") {
 	# initial covariate space:
@@ -25,14 +23,12 @@ ggally_custom_smooth <- function (data, mapping, ..., method = "lm") {
     return(p)
 }
 
-#' Short description
+#' A custom density for a \code{GGally::ggpairs()} plot
 #' 
-#' Longer description
-#' 
-#' @param data
-#' @param mapping
-#' @param ...
-#' @return
+#' @param data data set using
+#' @param mapping aesthetics being used
+#' @param ... other arguments to add to \code{\link[ggplot2]{geom_density}}
+#' @return A \code{ggplot}
 #' @importFrom ggplot2 ggplot scale_y_continuous geom_density
 ggally_custom_density <- function(data, mapping, ...){
     p <- ggplot(data, mapping) + scale_y_continuous()
@@ -100,16 +96,15 @@ plot_splom_sim_data <- function(dat, outcome_levels = 0:1, outcome_colors = RCol
 	return(p)
 }
 
-#' Short description
-#' 
-#' Longer description
+#' A heatmap displaying observation-level features and outcome
 #' 
 #' @param dat A \code{data.frame} with outcome column \code{Y} and ID column \code{ID}.
-#' @return A ggplot
+#' @return A \code{ggplot}
 #' @importFrom ggplot2 ggplot geom_tile aes scale_fill_gradient2 labs scale_x_discrete scale_y_discrete theme_bw theme element_blank element_text
 #' @importFrom scales brewer_pal
 #' @importFrom dplyr select pull
 #' @importFrom reshape2 melt
+#' @importFrom rlang .data
 #' @export
 #' @examples
 #' \dontrun{
@@ -117,18 +112,19 @@ plot_splom_sim_data <- function(dat, outcome_levels = 0:1, outcome_colors = RCol
 #' p <- plot_heatmap_sim_data(dat)
 #' }
 plot_heatmap_sim_data <- function(dat) {
-	Y <- dat %>% pull(Y)
+	Y <- dat %>% pull("Y")
 	if(length(unique(Y)) > 8) {
 		stop("plot_heatmap_sim_data() not implemented for continuous Y.")
 	}
 
-	X <- dat %>% select(-c(ID, Y))
+	X <- dat %>% select(!all_of(c("ID", "Y")))
 	outcome_colors <- scales::brewer_pal("qual")(length(unique(Y)))
 	
 	# heatmap of expression: green = suppressed, red = overexpressed, black = average
 	ggplot() +
 	 	geom_tile(data = reshape2::melt(as.matrix(X)), 
-	 		aes(x = as.factor(Var1), y = Var2, fill = value), color = "white") +
+	 			  aes(x = as.factor(.data[["Var1"]]), y = .data[["Var2"]], fill = .data[["value"]]),
+	 			  color = "white") +
 		scale_fill_gradient2("Value", low = "#01665e", mid = "#f5f5f5", high = "#b35806") +
 		labs(x = "Observation", y = "Variable") +
 	    scale_x_discrete(expand = c(0, 0)) + 
@@ -137,10 +133,9 @@ plot_heatmap_sim_data <- function(dat) {
 	    theme(panel.grid.major.x = element_blank(),
 	          panel.grid.major.y = element_blank(),
 	          axis.ticks = element_blank(),
-	          axis.text.x = element_text(size = 4, face = "bold",
-	          angle = 90, hjust = 0.3,
-	          # 'Vectorized input to `element_text()` is not officially supported.''
-	          color = outcome_colors[Y+1]))
+	          axis.text.x = element_text(size = 4, face = "bold", angle = 90, hjust = 0.3,
+								         # 'Vectorized input to `element_text()` is not officially supported.''
+								         color = outcome_colors[Y+1]))
 }
 
 ################################################################################
@@ -156,6 +151,7 @@ plot_heatmap_sim_data <- function(dat) {
 #' @return A \code{data.frame} with columns \code{ID}, \code{X1:20}, and \code{Y}.
 #' @importFrom magrittr `%>%`
 #' @importFrom dplyr bind_cols
+#' @importFrom stats rnorm
 #' @export
 #' @examples
 #' \dontrun{
@@ -187,8 +183,11 @@ sim_sl_data <- function(n_obs = 100, rnd_seed = NULL) {
 #' which may need to be installed from github like so:
 #' \code{remotes::install_github('osofr/simcausal', build_vignettes = FALSE)} 
 #' 
+#' @param outcome_name Character string containing the name of the outcome
+#' variable. Defaults to \code{"Y"} if not specified.
 #' @return A \code{DAG} object as defined by the \code{simcausal} package.
 #' @importFrom simcausal DAG.empty node set.DAG
+#' @importFrom stats plogis
 #' @examples
 #' \dontrun{
 #' d <- make_dag_proppr_data()
@@ -213,7 +212,6 @@ make_dag_proppr_data <- function(outcome_name = "Y") {
 
 #' Plot DAG for PROPPR example
 #' 
-#' Plot DAG for PROPPR example of ...
 #' @return DAG visualization
 #' @importFrom simcausal plotDAG
 #' @export
@@ -240,7 +238,6 @@ plot_dag_proppr_data <- function() {
 #' 
 #' @param n_obs Number of observations to simulate.
 #' @param rnd_seed Random seed to be used when simulating.
-#' @param test_prop Proportion of \code{n_obs} labeled as 'test'
 #' @param outcome_name Name of outcome column (only impacts DAG output)
 #' @param verbose Print diagnostic messages? Defaults to FALSE
 #' @return A \code{data.frame} with columns \code{ID}, \code{W1:4}, \code{GCS}, \code{Age},
@@ -272,6 +269,7 @@ sim_proppr_data <- function(n_obs = 500, rnd_seed = NULL, outcome_name = "Y", ve
 #' 
 #' @return A \code{DAG} object as defined by the \code{simcausal} package.
 #' @importFrom simcausal DAG.empty node set.DAG
+#' @importFrom stats plogis
 #' @examples
 #' \dontrun{
 #' d <- make_dag_toy_data()
@@ -286,8 +284,7 @@ make_dag_toy_data <- function() {
 }
 
 #' Plot DAG for a toy example
-#' 
-#' Plot DAG for a toy example of ...
+#'
 #' @return DAG visualization
 #' @importFrom simcausal plotDAG
 #' @export
@@ -362,8 +359,8 @@ sim_elemstatlearn_data <- function(n_obs = 500, p_noise = 6, class_prop = 0.5, r
 	Y <- c(rep(0, floor(n_obs*(1-class_prop))), rep(1, ceiling(n_obs*class_prop)))
 	# First generate 10 means m_k from a bivariate Gaussian distribution N((1, 0)^T, I) and label this class 0.
 	# Similarly, draw 10 more from N((0,1)^T, I) and label class 1.
-	means <- list(class0 = MASS::mvrnorm(10, mu = c(1,0,1,0), Sigma = diag(4)),
-				  class1 = MASS::mvrnorm(10, mu = c(0,1,0,1), Sigma = diag(4))) %>%
+	means <- list(class0 = mvrnorm(10, mu = c(1,0,1,0), Sigma = diag(4)),
+				  class1 = mvrnorm(10, mu = c(0,1,0,1), Sigma = diag(4))) %>%
 		lapply(as.data.frame) %>%
 		bind_rows()
 
@@ -372,11 +369,11 @@ sim_elemstatlearn_data <- function(n_obs = 500, p_noise = 6, class_prop = 0.5, r
 	centers <- c(sample(1:10, floor(n_obs*(1-class_prop)), replace = TRUE),
 				 sample(11:20, ceiling(n_obs*class_prop), replace = TRUE))
 	#	and then generate a N(m_k, I/5), thus leading to a mixture of Gaussian clusters for each class.
-	x_mix <- MASS::mvrnorm(n_obs, mu = rep(0, 4), Sigma = diag(4)/5) %>%
+	x_mix <- mvrnorm(n_obs, mu = rep(0, 4), Sigma = diag(4)/5) %>%
 		as.data.frame() %>%
 		rename_with(~ gsub("^V", "Xmix", .x)) %>%
 		`+`(means[centers, ])
-	x_noise <- MASS::mvrnorm(n_obs, mu = rep(0, p_noise), Sigma = diag(p_noise)) %>%
+	x_noise <- mvrnorm(n_obs, mu = rep(0, p_noise), Sigma = diag(p_noise)) %>%
 		as.data.frame() %>%
 		rename_with(~ gsub("^V", "Xnoise", .x))
 
@@ -386,4 +383,43 @@ sim_elemstatlearn_data <- function(n_obs = 500, p_noise = 6, class_prop = 0.5, r
 	bind_cols(data.frame(ID = seq_along(Y)),
 			  X,
 			  data.frame(Y = Y))
+}
+
+################################################################################
+
+#' Utility function to create indicator variables from a factor
+#' 
+#' @param col_name Character string; column name in \code{dat} containing a
+#' factor variable
+#' @param dat \code{data.frame}
+#' @return A \code{data.frame} containing indicator column(s)
+#' @importFrom stats model.matrix
+#' @export
+#' @examples
+#' factor_to_indicator("Species", iris)
+factor_to_indicator <- function(col_name, dat){
+    old_na_action <- options('na.action')
+    options(na.action = 'na.pass')
+
+    x_factor <- dat[[col_name]]
+    x <- gsub("[[:space:]]+", "_", x_factor)
+    x_expand <- as.data.frame(model.matrix(~0+x))
+    colnames(x_expand) <- paste(col_name, gsub("^x", "", colnames(x_expand)), sep=".")
+
+    if(any(rowSums(is.na(x_expand))>0)) {
+        x_miss <- which(rowSums(is.na(x_expand))>0)
+        x_expand[x_miss, ] <- 0
+        x_miss_col <- rep(0, nrow(x_expand))
+        x_miss_col[x_miss] <- 1
+        x_expand <- cbind(x_miss_col, x_expand)
+        colnames(x_expand)[1] <- paste("miss", col_name, sep = ".")
+    }
+
+    # remove baseline level
+    baseline_level <- paste(col_name, gsub("[[:space:]]+", "_", levels(x_factor)[1]), sep = ".")
+    x_expand <- x_expand[,-which(colnames(x_expand) %in% baseline_level), drop = FALSE]
+
+    options(old_na_action)
+
+    return(x_expand)
 }

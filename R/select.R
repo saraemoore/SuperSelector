@@ -25,12 +25,10 @@ cutoff.val = function(attrs, k) {
     rownames(attrs)[attrs[,1] > k]
 }
 
-#' Short description
-#' 
-#' Long description
+#' Applies a feature selection function by name
 #' 
 #' @param attrs Passed on to the selector function
-#' @param selector A selector function
+#' @param selector A selector function (character string).
 #' @param k Passed on to the selector function
 #' @param env Environment in which \code{selector} can be found. Defaults to \code{parent.frame()}.
 #' Note that this means that packages containing selector functions (FSelector, for example) may
@@ -45,12 +43,10 @@ featureSelector = function(attrs, selector, k, env = parent.frame()) {
 
 #' Coerce a value to numeric or die trying
 #' 
-#' Coerce a value to numeric or die trying
-#' 
 #' @param x A value that should be coerced to numeric
 #' @param errorFunction A function which elicits a useful error message if \code{x} cannot be
 #' coerced to numeric
-#' @return \code{x} as numeric, if it was coercible; otherwise, an error is produced.
+#' @return \code{x} as numeric, if coercible; otherwise, an error is produced.
 #' @export
 #' @examples
 #' \dontrun{
@@ -74,18 +70,16 @@ makeLibArgNumeric = function(x, errorFunction) {
     return(x)
 }
 
-#' Short description
+#' Facilitates the application of a feature selection function by name
 #' 
-#' Long description
-#' 
-#' @param selector
-#' @param k
-#' @param x
-#' @param xNames
-#' @param env environment; passthru to featureSelector. defaults to parent.frame()
-#' @param verbose logical; if TRUE, print retained features. defaults to FALSE
+#' @param selector A selector function (character string).
+#' @param k Passed on to the selector function (as argument \code{k}).
+#' @param x A vector of data (coercible to a \code{data.frame})
+#' @param xNames a character array the same length as \code{x}
+#' @param env environment; passed through to \code{featureSelector}. Defaults to \code{parent.frame()}.
+#' @param verbose boolean; if \code{TRUE}, print retained features. Defaults to \code{FALSE}.
 #' @importFrom stats setNames
-#' @return
+#' @return A named boolean vector
 metaFeatSel = function(selector, k, x, xNames, env = parent.frame(), verbose = FALSE) {
 
     attrs = as.data.frame(x)
@@ -110,62 +104,80 @@ metaFeatSel = function(selector, k, x, xNames, env = parent.frame(), verbose = F
 }
 
 ############################################################
-# wrap the below in a method called extractScreen.CV.SuperLearner
-# also create an S3 generic extractScreen
-# and a default method extractScreen.default
-# this method could be implemented for all screening algorithms (including those in SLScreenExtra)
 
-#' Short description
+#' Apply \code{metaFeatSel} to contents of a \code{data.frame}
 #' 
-#' Long description
-#' 
-#' @param df
-#' @param sel
-#' @param propCol
-#' @param verbose logical; passthru to metaFeatSel
+#' @param df A \code{data.frame} containing summarized feature selection results
+#' from \code{CV.SuperLearner}; expected to contain at least columns named
+#' "term" and the value of \code{propCol}.
+#' @param sel A \code{data.frame} with 2 columns: "selector" and
+#' "k". The "selector" column should contain strings naming selector functions
+#' (typically from the \code{\link[FSelector]{FSelector}} package, with a prefix
+#' of \code{cutoff.}). The "k" column should be the required second argument to
+#' the named "selector" function (usually named \code{k}), if one exists. If
+#' there is no second argument, column "k" should be set to \code{NA}. Rownames
+#' will be utilized if they are included.
+#' @param propCol character string; should correspond to a column name in
+#' \code{df}
+#' @param verbose boolean; passed through to \link{metaFeatSel}
 #' @importFrom purrr map2 map
 #' @importFrom dplyr mutate
 #' @importFrom magrittr `%>%`
-#' @return
+#' @importFrom rlang .data
+#' @return A \code{data.frame}
 selectFeaturesBySelector <- function(df, sel, propCol, verbose) {
     # as.character because it may come in as a factor if stringsAsFactors isn't FALSE
     sel %>%
-        mutate(keep = map2(as.character(selector), k, metaFeatSel, df[, propCol], df[, "term"], verbose = verbose)) %>%
-        mutate(keep_names = map(keep, function(x) names(which(x))))
+        mutate(keep = map2(as.character(.data$selector), .data$k, metaFeatSel, df[, propCol], df[, "term"], verbose = verbose)) %>%
+        mutate(keep_names = map(.data$keep, function(x) names(which(x))))
 }
 
-#' Short description
+#' Restructure and summarize \code{data.frame} by "method" column
 #' 
-#' Long description
-#' 
-#' @param df
-#' @param sel
-#' @param propCol
-#' @param verbose logical; passthru to selectFeaturesBySelector
+#' @param df A \code{data.frame} containing summarized feature selection results
+#' from \code{CV.SuperLearner}; expected to contain at least columns named
+#' "method," "term," and the value of \code{propCol}.
+#' @param sel A \code{data.frame} with 2 columns: "selector" and
+#' "k". The "selector" column should contain strings naming selector functions
+#' (typically from the \code{\link[FSelector]{FSelector}} package, with a prefix
+#' of \code{cutoff.}). The "k" column should be the required second argument to
+#' the named "selector" function (usually named \code{k}), if one exists. If
+#' there is no second argument, column "k" should be set to \code{NA}. Rownames
+#' will be utilized if they are included.
+#' @param propCol character string; should correspond to a column name in
+#' \code{df}
+#' @param verbose boolean; passed through to \link{selectFeaturesBySelector}
 #' @importFrom purrr map
 #' @importFrom dplyr bind_rows
 #' @importFrom magrittr `%>%`
-#' @return
+#' @return A \code{data.frame}
 selectFeaturesByMethodAndSelector <- function(df, sel, propCol, verbose) {
-    df %>%
-        split(.$method) %>%
+    split(df, df$method) %>%
         map(~ selectFeaturesBySelector(.x, sel, propCol, verbose = verbose)) %>%
         bind_rows(.id = "method")
 }
 
-#' Short description
+#' Extract feature selection results from code{CV.SuperLearner} object
 #' 
-#' Long description
-#' 
-#' @param x
-#' @param selector.library
-#' @param weighted
-#' @param verbose logical; passthru to selectFeaturesByMethodAndSelector
-#' @return
+#' @param x A named list containing objects of class \code{CV.SuperLearner}
+#' @param selector.library A \code{data.frame} with 2 columns: "selector" and
+#' "k". The "selector" column should contain strings naming selector functions
+#' (typically from the \code{\link[FSelector]{FSelector}} package, with a prefix
+#' of \code{cutoff.}). The "k" column should be the required second argument to
+#' the named "selector" function (usually named \code{k}), if one exists. If
+#' there is no second argument, column "k" should be set to \code{NA}. Rownames
+#' will be utilized if they are included.
+#' @param weighted boolean; should the estimated weights be used to weight the
+#' feature selection?
+#' @param verbose boolean; passed through to \link{selectFeaturesByMethodAndSelector}
+#' @return A list with named elements \code{whichVariable} and \code{summary}.
 #' @import broom
 #' @import SLScreenExtra
 #' @importFrom dplyr bind_rows
 extractScreen.CV.SuperLearner = function(x, selector.library, weighted, verbose) {
+    # TODO: create an S3 generic extractScreen and default method extractScreen.default
+    # this method could be implemented for all screening algorithms
+    # (including those in SLScreenExtra)
 
     # alg <- ifelse(weighted, "both", "screening")
     allResByMethod = lapply(c("both", "screening"), function(alg)
@@ -182,21 +194,28 @@ extractScreen.CV.SuperLearner = function(x, selector.library, weighted, verbose)
     #   # collapse across fold and screening algorithm.
     #   "screener"
     # }
+
     summByFeature <- mapply(summarizeScreen,
-                            allRes, collapseCols = list(c("predictor", "screener"), "screener"),
+                            allRes,
+                            groupCols = list(c("method"),
+                                             c("method", "predictor")),
                             SIMPLIFY = FALSE)
     # for output purposes, better to have this as a list of data.frames than a single data.frame.
     # summByFeature = split(summByFeature %>% select(-method), summByFeature$method)
 
     # propCol <- ifelse(weighted, "wtdPropFoldSel", "propFoldSel")
 
-    if(is.null(rownames(selector.library))|rownames(selector.library)==seq(nrow(selector.library))) {
+    if(all(is.null(rownames(selector.library))) ||
+        all(rownames(selector.library)==seq(nrow(selector.library)))) {
         rownames(selector.library) = apply(selector.library, 1, paste, collapse = "_k")
     }
 
-    cvSLkeepCols <- mapply(function(df, propCol)
-                           selectFeaturesByMethodAndSelector(df, selector.library, propCol, verbose = verbose),
-                           summByFeature, c("wtdPropFoldSel", "propFoldSel"),
+    cvSLkeepCols <- mapply(function(df, propCol) selectFeaturesByMethodAndSelector(df,
+                                                                                   selector.library,
+                                                                                   propCol,
+                                                                                   verbose = verbose),
+                           summByFeature,
+                           c("wtdPropFoldSel", "propFoldSel"),
                            SIMPLIFY = FALSE)
     # names(cvSLkeepCols) <- c("weighted", "unweighted")
 
@@ -206,38 +225,36 @@ extractScreen.CV.SuperLearner = function(x, selector.library, weighted, verbose)
 
 ############################################################
 
-#' Short description
-#' 
-#' Long description
+#' Assess whether \code{x} contains multiple unique values
 #' 
 #' @param x a vector
-#' @return logical
+#' @return A boolean
 is_not_homogenous <- function(x) {
     return(length(unique(x)) > 1)
 }
 
-#' Short description
-#' 
-#' Long description
+#' Helper function to restructure result from \code{extractScreen.CV.SuperLearner}
 #' 
 #' @param wv_result The \code{data.frame} stored in the \code{whichVariable} element of the list
 #' returned from \code{extractScreen.CV.SuperLearner}. This \code{data.frame} is expected to
-#' contain columns named \code{keep} and \code{method}. 
+#' contain (at least) columns named "keep" and "method". 
 #' @param feature_names Ordered names of predictor variable(s).
-#' @return A \code{data.frame} with indicators reordered by original \code{features} column order
+#' @return A \code{data.frame} with indicators reordered by original
+#' \code{feature_names} column order
 #' @importFrom dplyr mutate rename
 #' @importFrom magrittr `%>%`
 #' @importFrom purrr map map_chr
+#' @importFrom rlang .data
 sortWhichVariable <- function(wv_result, feature_names) {
     wv_result %>%
-        mutate(keep = map(keep, function(i) i[feature_names])) %>%
-        mutate(keep_bin = map_chr(keep, function(x) paste(as.numeric(x), collapse = ""))) %>%
-        rename(combo_method = method) # prevent conflicts later
+        mutate(keep = map(.data$keep, function(i) i[feature_names])) %>%
+        mutate(keep_bin = map_chr(.data$keep, function(x) paste(as.numeric(x), collapse = ""))) %>%
+        rename(combo_method = .data$method) # prevent conflicts later
 }
 
-#' Feature selection via CV.SuperLearner
+#' Feature selection via \code{CV.SuperLearner}
 #' 
-#' Feature selection via CV.SuperLearner
+#' Feature selection via \code{CV.SuperLearner}
 #' 
 #' @param Y Outcome (numeric vector). See \code{\link[SuperLearner]{CV.SuperLearner}}.
 #' @param X Predictor variable(s) (data.frame or matrix). See
@@ -253,7 +270,7 @@ sortWhichVariable <- function(wv_result, feature_names) {
 #' estimate coefficients to combine algorithms.
 #' @param SL.library A list of character vectors of length 2, each containing a screener algorithm
 #' and a prediction algorithm. See \code{\link[SuperLearner]{SuperLearner}}.
-#' @param selector.library As SL.library, either a vector of length 2 or a list of such vectors. The first element of each vector should be a string naming a selector function (typically from the \code{\link[FSelector]{FSelector}} package, with a prefix of \code{cutoff.}). The second element of the vector should be the required second argument to the named function (usually named \code{k}), if one exists. If there is no second argument, this second element can be set to \code{NULL} or, equivalently, omitted altogether.
+#' @param selector.library A \code{data.frame} with 2 columns: "selector" and "k". The "selector" column should contain strings naming selector functions (typically from the \code{\link[FSelector]{FSelector}} package, with a prefix of \code{cutoff.}). The "k" column should be the required second argument to the named "selector" function (usually named \code{k}), if one exists. If there is no second argument, column "k" should be set to \code{NA}. Rownames will be utilized if they are included.
 #' @param nFolds numeric of length 1 or 2. If length(nFolds)==1, the value provided will be used as the number of cross-validation folds for both the outer (\code{\link[SuperLearner]{CV.SuperLearner}}) and inner (SuperLearner) cross-validations. If length(nFolds)==2, the first element or element with name "outer" will be used as the number of folds for the outer (\code{\link[SuperLearner]{CV.SuperLearner}}) cross-validation, and the second element or element with name "inner" will be used as the number of folds for the inner (SuperLearner) cross-validation.
 #' @param trimLogit Only applicable when using the \code{NNloglik} method. See
 #' \code{\link[SuperLearner]{SuperLearner.control}}.
@@ -284,8 +301,10 @@ sortWhichVariable <- function(wv_result, feature_names) {
 #' \dontrun{
 #' # remotes::install_github('osofr/simcausal', build_vignettes = FALSE)
 #' dat <- sim_toy_data(n_obs = 200, rnd_seed = 620)
-#' res <- cvSLFeatureSelector(dat %>% pull(Y), dat %>% select(-c(ID, Y)), family = binomial(),
-#'                            method = "method.NNloglik",
+#' library(SuperLearner)  # for SL.mean, etc.
+#' library(FSelector) # for cutoff.biggest.diff, etc.
+#' res <- cvSLFeatureSelector(dat$Y, dat[,-which(colnames(dat) %in% c("ID", "Y"))],
+#'                            family = binomial(), method = "method.NNloglik",
 #'                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
 #'                                                       c("SL.mean", "screen.earth.backwardprune")),
 #'                                                  c("random forest biggest diff mean",
@@ -301,8 +320,8 @@ sortWhichVariable <- function(wv_result, feature_names) {
 #' 
 #' # based on example in SuperLearner package
 #' dat <- sim_sl_data(n_obs = 100, rnd_seed = 1)
-#' res <- cvSLFeatureSelector(dat %>% pull(Y), dat %>% select(-c(ID, Y)), family = gaussian(),
-#'                            method = "method.NNLS",
+#' res <- cvSLFeatureSelector(dat$Y, dat[,-which(colnames(dat) %in% c("ID", "Y"))],
+#'                            family = gaussian(), method = "method.NNLS",
 #'                            SL.library = setNames(list(c("SL.mean", "screen.randomForest.imp"),
 #'                                                       c("SL.mean", "screen.earth.backwardprune")),
 #'                                                  c("random forest biggest diff mean",
@@ -397,18 +416,16 @@ cvSLFeatureSelector = function(Y, X, family = binomial(), obsWeights = NULL, id 
 
 ################################################################################
 
-# need to retain method, selector, k -- as three list-columns
-# only keeping each unique combo of X columns
-# BUT need to keep up with method, selector, k for each so we can expand back out after prediction step
-
-#' Short description
+#' Dedupe/summarize "whichVariable" element of \code{cvSLFeatureSelector} result
 #' 
-#' Long description
-#' 
-#' @param res returned from cvSLFeatureSelector()
-#' @return
+#' @param res \code{list} result from \link{cvSLFeatureSelector}. Expected
+#' to contain a \code{data.frame} element named "whichVariable".
+#' @return The "whichVariable" \code{data.frame}, deduped/summarized by the
+#' "keep_bin" column and with the "combo_method", "selector", and "k" columns
+#' converted to list-columns.
 #' @importFrom dplyr group_by summarize_at left_join select
 #' @importFrom magrittr `%>%`
+#' @importFrom rlang .data
 #' @export
 #' @examples
 #' \dontrun{
@@ -432,33 +449,49 @@ cvSLFeatureSelector = function(Y, X, family = binomial(), obsWeights = NULL, id 
 #' }
 groupBySelectionSet <- function(res) {
     wv <- res$whichVariable
+    # need to retain method, selector, k -- as three list-columns
+    # only keeping each unique combo of X columns
+    # BUT need to keep up with method, selector, k for each so we can expand back out after prediction step
     wv %>%
-        group_by(keep_bin) %>%
+        group_by(.data$keep_bin) %>%
         summarize_at(c("combo_method", "selector", "k"), list) %>%
-        left_join(wv %>% select(keep, keep_names, keep_bin) %>% unique(), by = "keep_bin")
+        left_join(wv %>% select(.data$keep, .data$keep_names, .data$keep_bin) %>% unique(),
+                  by = "keep_bin")
 }
 
 ################################################################################
 
 #' Wraps \code{cvSLFeatureSelector} for use as a \code{SuperLearner} screening algorithm
 #' 
-#' Long description
+#' Convenience function providing an interface to \code{cvSLFeatureSelector}
+#' from \code{\link[SuperLearner]{SuperLearner}} via a screening function.
 #' 
-#' @param Y
-#' @param X
-#' @param family
-#' @param obsWeights
-#' @param id
-#' @param ...
-#' @return
+#' @param Y Outcome (numeric vector). See \code{\link[SuperLearner]{CV.SuperLearner}}
+#' for specifics.
+#' @param X Predictor variable(s) (data.frame or matrix). See
+#' \code{\link[SuperLearner]{CV.SuperLearner}} for specifics.
+#' @param family Error distribution to be used in the model:
+#' \code{\link[stats]{gaussian}} or \code{\link[stats]{binomial}}.
+#' See \code{\link[SuperLearner]{CV.SuperLearner}} for specifics.
+#' @param obsWeights Optional numeric vector of observation weights. See
+#' \code{\link[SuperLearner]{CV.SuperLearner}} for specifics.
+#' @param id Cluster identification variable. See
+#' \code{\link[SuperLearner]{CV.SuperLearner}} for specifics.
+#'
+#' @param ... Other arguments to be passed through to
+#' \code{\link{cvSLFeatureSelector}}.
+#' @return A boolean vector with length equal to \code{ncol(X)}
 #' @export
 #' @examples
 #' \dontrun{
-#' screen.CV.SuperLearner(Y, X, family = binomial(), obsWeights = NULL, id = NULL, verbose = TRUE)
+#' # based on example in SuperLearner package
+#' n <- 500
+#' dat <- sim_sl_data(n_obs = n, rnd_seed = 1)
+#' screen.CV.SuperLearner(dat$Y, dat[,-which(colnames(dat) %in% c("ID", "Y"))],
+#'                        family = gaussian(), obsWeights = NULL, id = dat$ID, verbose = TRUE)
 #' }
-# TODO: should this instead go in extra_sl_libalgs.R?
 screen.CV.SuperLearner = function(Y, X, family, obsWeights, id, ...) {
-    # SL.library, selector.library, etc. can be passed through ...
+    # SL.library, selector.library, etc. can be passed in via `...`
     res = cvSLFeatureSelector(Y, X, family, obsWeights, id, ...)
     # only keep first set of variables selected just in case
     return(res$whichVariable[[1, "keep"]])

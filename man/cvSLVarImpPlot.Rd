@@ -2,7 +2,7 @@
 % Please edit documentation in R/visualize.R
 \name{cvSLVarImpPlot}
 \alias{cvSLVarImpPlot}
-\title{Short description}
+\title{Visualize the summarized result from \code{cvSLFeatureSelector}}
 \usage{
 cvSLVarImpPlot(
   res,
@@ -12,7 +12,7 @@ cvSLVarImpPlot(
   labelVals = TRUE,
   featLabs = NULL,
   panelLabs = NULL,
-  varImpTheme = theme_bw() + theme(plot.title = element_text(hjust = 0.5),
+  varImpTheme = theme_bw(base_size = 10) + theme(plot.title = element_text(hjust = 0.5),
     plot.subtitle = element_text(hjust = 0.5), legend.position = "none",
     panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank()),
   pointSize = 2,
@@ -22,14 +22,72 @@ cvSLVarImpPlot(
   subtitle = NULL,
   panelCol = NULL,
   shapeCol = NULL,
-  addSummary = TRUE
+  addSummary = TRUE,
+  x_breaks = waiver(),
+  tikz_output = FALSE
 )
 }
-\value{
+\arguments{
+\item{res}{A \code{data.frame} containing at least the columns specified in
+\code{featCol} and \code{valCol}, and, if specified, \code{panelCol} and
+\code{shapeCol}.}
 
+\item{featCol}{A character string corresponding to a column name of
+\code{res} containing the feature/predictor variable name. Defaults to
+"term".}
+
+\item{valCol}{A character string corresponding to a column name of
+\code{res} containing the value to be plotted on the horizontal axis.
+Defaults to "propFoldSel".}
+
+\item{valLab}{A character string containing the horizontal axis label.
+Defaults to "Fraction of CVSL folds in which feature was selected".}
+
+\item{labelVals}{A boolean indicating whether rounded values should be used
+for the horizontal axis tick labels. Defaults to \code{TRUE}.}
+
+\item{featLabs}{An optional named character vector containing feature labels.}
+
+\item{panelLabs}{An optional named character vector containing panel labels.}
+
+\item{varImpTheme}{A ggplot theme for the plot.}
+
+\item{pointSize}{The point size for the plot. Defaults to \code{2}.}
+
+\item{strokeSize}{The line thickness for the plot. Defaults to \code{1}.}
+
+\item{maxColor}{The darkest color of the scatterplot points, to which a 60\%
+transparency will be applied for visibility under overplotting conditions.
+Defaults to \code{"grey10"}.}
+
+\item{title}{An optional title for the plot. Defaults to
+"CV SuperLearner Variable Importance".}
+
+\item{subtitle}{An optional subtitle for the plot. If not provided, no
+subtitle will appear on the plot.}
+
+\item{panelCol}{An optional character string corresponding to a column name
+of \code{res} containing the variable to use for plot paneling. If omitted,
+a single plot will be produced. If set, typically set to "method".}
+
+\item{shapeCol}{An optional character string corresponding to a column name
+of \code{res} containing the variable to use for scatterplot point shapes.
+If omitted, a single default shape will be used. If set, typically set to
+"fold".}
+
+\item{addSummary}{A boolean indicating whether the median and mean of
+\code{valCol} should be represented on the plot. Defaults to \code{TRUE}.}
+
+\item{x_breaks}{An optional vector of breaks to use on the horizontal axis.}
+
+\item{tikz_output}{A boolean indicating whether percent symbols should be
+escaped. Defaults to \code{FALSE}.}
+}
+\value{
+A \code{ggplot}
 }
 \description{
-Long description
+Visualize the summarized result from \code{cvSLFeatureSelector}
 }
 \examples{
 \dontrun{

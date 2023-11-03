@@ -2,18 +2,26 @@
 % Please edit documentation in R/select.R
 \name{metaFeatSel}
 \alias{metaFeatSel}
-\title{Short description}
+\title{Facilitates the application of a feature selection function by name}
 \usage{
 metaFeatSel(selector, k, x, xNames, env = parent.frame(), verbose = FALSE)
 }
 \arguments{
-\item{env}{environment; passthru to featureSelector. defaults to parent.frame()}
+\item{selector}{A selector function (character string).}
 
-\item{verbose}{logical; if TRUE, print retained features. defaults to FALSE}
+\item{k}{Passed on to the selector function (as argument \code{k}).}
+
+\item{x}{A vector of data (coercible to a \code{data.frame})}
+
+\item{xNames}{a character array the same length as \code{x}}
+
+\item{env}{environment; passed through to \code{featureSelector}. Defaults to \code{parent.frame()}.}
+
+\item{verbose}{boolean; if \code{TRUE}, print retained features. Defaults to \code{FALSE}.}
 }
 \value{
-
+A named boolean vector
 }
 \description{
-Long description
+Facilitates the application of a feature selection function by name
 }

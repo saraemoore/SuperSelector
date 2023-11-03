@@ -2,20 +2,21 @@
 % Please edit documentation in R/select.R
 \name{sortWhichVariable}
 \alias{sortWhichVariable}
-\title{Short description}
+\title{Helper function to restructure result from \code{extractScreen.CV.SuperLearner}}
 \usage{
 sortWhichVariable(wv_result, feature_names)
 }
 \arguments{
 \item{wv_result}{The \code{data.frame} stored in the \code{whichVariable} element of the list
 returned from \code{extractScreen.CV.SuperLearner}. This \code{data.frame} is expected to
-contain columns named \code{keep} and \code{method}.}
+contain (at least) columns named "keep" and "method".}
 
 \item{feature_names}{Ordered names of predictor variable(s).}
 }
 \value{
-A \code{data.frame} with indicators reordered by original \code{features} column order
+A \code{data.frame} with indicators reordered by original
+\code{feature_names} column order
 }
 \description{
-Long description
+Helper function to restructure result from \code{extractScreen.CV.SuperLearner}
 }

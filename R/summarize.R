@@ -1,15 +1,15 @@
-#' Short description
+#' Summarize "summary" element of \code{cvSLFeatureSelector}
 #' 
-#' Long description
-#' 
-#' @param res The \code{summary} element of the result of CV SuperLearner feature selection.
-#' @param groupCols
-#' @param collapseCols
+#' @param res The \code{data.frame} "summary" element of a
+#' \link{cvSLFeatureSelector} result
+#' @param groupCols Column names of \code{res} (as a character vector) to group
+#' by before summarizing.
 #' @param discrete If \code{TRUE}, instead of summarizing, simply return rows in \code{res} where
 #' \code{discrete} is \code{TRUE}. Defaults to \code{FALSE}. 
 #' @return A \code{data.frame}
 #' @importFrom dplyr filter group_by group_by_at summarize arrange desc
 #' @importFrom magrittr `%>%`
+#' @importFrom rlang .data
 #' @export 
 #' @examples
 #' \dontrun{
@@ -30,9 +30,11 @@
 #'                            nFolds = 3,
 #'                            verbose = TRUE)
 #' summarizeScreen(res$summary, groupCols = c("method", "screener"))
-#' summarizeScreen(res$summary, groupCols = c("method", "screener"), collapseCols = "screener")
+#' summarizeScreen(res$summary, groupCols = "method")
 #' }
-summarizeScreen = function(res, groupCols = c("method", "predictor", "screener"), collapseCols = NULL, discrete = FALSE) {
+summarizeScreen = function(res,
+                           groupCols = c("method", "predictor", "screener"),
+                           discrete = FALSE) {
 
     if(discrete) {
         # basically do nothing
@@ -41,25 +43,25 @@ summarizeScreen = function(res, groupCols = c("method", "predictor", "screener")
 
     # summarize allResByFold$selected by method+screener+term (proportion of folds term/variable was selected)
     for(g in groupCols) {
-        if((g %in% colnames(res))&!(g %in% collapseCols)) {
+        if((g %in% colnames(res))) {
             res = res %>% group_by_at(g, .add = TRUE)
         }
     }
     res = res %>%
-            group_by(term, .add = TRUE)
+            group_by(.data$term, .add = TRUE)
 
     res <- if("predictor" %in% colnames(res)) {
         res %>%
-            dplyr::summarize(propFoldSel = mean(selected),
-                      # numFoldSel = sum(selected),
-                      wtdPropFoldSel = mean(estimate*selected)) %>%
-            arrange(desc(wtdPropFoldSel))
-                      # wtdNumFoldSel = sum(estimate*selected)))
+            dplyr::summarize(propFoldSel = mean(.data$selected),
+                      # numFoldSel = sum(.data$selected),
+                      wtdPropFoldSel = mean(.data$estimate*.data$selected)) %>%
+            arrange(desc(.data$wtdPropFoldSel))
+                      # wtdNumFoldSel = sum(.data$estimate*.data$selected)))
     } else {
          res %>%
-            dplyr::summarize(propFoldSel = mean(selected)) %>%
-            arrange(desc(propFoldSel))
-                      # numFoldSel = sum(selected))
+            dplyr::summarize(propFoldSel = mean(.data$selected)) %>%
+            arrange(desc(.data$propFoldSel))
+                      # numFoldSel = sum(.data$selected))
     }
 
     res %>%

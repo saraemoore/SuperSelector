@@ -13,7 +13,7 @@ makeLibArgNumeric(x, errorFunction)
 coerced to numeric}
 }
 \value{
-\code{x} as numeric, if it was coercible; otherwise, an error is produced.
+\code{x} as numeric, if coercible; otherwise, an error is produced.
 }
 \description{
 Coerce a value to numeric or die trying
