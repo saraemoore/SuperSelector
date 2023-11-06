@@ -377,10 +377,12 @@ cvSLFeatureSelector = function(Y, X, family = binomial(), obsWeights = NULL, id 
         Y = Y, X = X, family = family,
         SL.library = unname(SL.library),
         method = method[[1]], id = id, verbose = verbose,
-        control = list(saveFitLibrary = TRUE, trimLogit = trimLogit), # do we really need saveFitLibrary here?
+        control = list(saveFitLibrary = FALSE, trimLogit = trimLogit),
         cvControl = list(V = nFolds["outer"], stratifyCV = stratifyCV, shuffle = shuffle, validRows = validRows),
         innerCvControl = list(list(V = nFolds["inner"], stratifyCV = stratifyCV, shuffle = shuffle, validRows = validRows)),
-        obsWeights = obsWeights, saveAll = TRUE, ...)
+        obsWeights = obsWeights,
+        # saveAll = TRUE ensures the "AllSL" element is included in the result, which is required by tidy.CV.SuperLearner()
+        saveAll = TRUE, ...)
 
     if(weighted&length(method) > 1) {
         cvSLres = c(list(cvSLres),
