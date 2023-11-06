@@ -1,3 +1,7 @@
+# SuperSelector 0.1.2
+
+- Reduce memory usage of `cvSLFeatureSelector()`
+
 # SuperSelector 0.1.1
 
 - Add citation info.
